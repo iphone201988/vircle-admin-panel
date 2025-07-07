@@ -1,4 +1,4 @@
-import toast from "react-hot-toast";
+// import toast from "react-hot-toast";
 
 export const getAnalyticsInsights = async ()=> {
     try {
@@ -20,6 +20,7 @@ export const getAnalyticsInsights = async ()=> {
         console.error('Error While Fetching Insights',error);
     }
 }
+
 
 export const getUserList = async () => {
      try {

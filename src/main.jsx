@@ -5,11 +5,18 @@ import { Toaster } from "react-hot-toast";
 import "./index.css";
 import App from "./App.jsx";
 
+import { Provider } from "react-redux";
+import { store } from "./rtk/store";
+
+
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <AuthProvider>
-      <App />
-       <Toaster position="top-right" reverseOrder={false} />
-    </AuthProvider>
+   <StrictMode>
+    <Provider store={store}>
+      <AuthProvider>
+        <App />
+        <Toaster position="top-right" reverseOrder={false} />
+      </AuthProvider>
+    </Provider>
   </StrictMode>
 );
+
