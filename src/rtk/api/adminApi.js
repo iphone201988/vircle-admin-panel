@@ -13,19 +13,17 @@ export const adminApi = createApi({
   tagTypes: ['Users', 'AiContacts', 'Analytics', 'Contacts'],
   endpoints: (builder) => ({
 
-    getAnalyticsInsights: builder.query<any, void>({
+    getAnalyticsInsights: builder.query({
       query: () => '/getAnalysticsInsights',
       providesTags: ['Analytics'],
     }),
 
-
-    getUserList: builder.query<any, void>({
+    getUserList: builder.query({
       query: () => '/getAllUsers',
       providesTags: ['Users'],
     }),
 
-
-    deleteUser: builder.mutation<any, string>({
+    deleteUser: builder.mutation({
       query: (id) => ({
         url: `/deleteUser/${id}`,
         method: 'DELETE',
@@ -33,8 +31,7 @@ export const adminApi = createApi({
       invalidatesTags: ['Users'],
     }),
 
-
-    activateOrDeactivate: builder.mutation<any, string>({
+    activateOrDeactivate: builder.mutation({
       query: (id) => ({
         url: `/activateOrDeactivateUser/${id}`,
         method: 'PUT',
@@ -42,14 +39,12 @@ export const adminApi = createApi({
       invalidatesTags: ['Users'],
     }),
 
-
-    allAiContactsList: builder.query<any, void>({
+    allAiContactsList: builder.query({
       query: () => '/getAllAiContacts',
       providesTags: ['AiContacts'],
     }),
 
-
-    updateAiContact: builder.mutation<any, { id: string; aiContact: any }>({
+    updateAiContact: builder.mutation({
       query: ({ id, aiContact }) => ({
         url: `/updateAiContact/${id}`,
         method: 'PUT',
@@ -58,8 +53,7 @@ export const adminApi = createApi({
       invalidatesTags: ['AiContacts'],
     }),
 
-
-    deleteAiContact: builder.mutation<any, string>({
+    deleteAiContact: builder.mutation({
       query: (id) => ({
         url: `/deleteAiContact/${id}`,
         method: 'DELETE',
@@ -67,12 +61,11 @@ export const adminApi = createApi({
       invalidatesTags: ['AiContacts'],
     }),
 
-
-    getContacts: builder.query<any, void>({
+    getContacts: builder.query({
       query: () => '/getContacts',
       providesTags: ['Contacts'],
     }),
-    
+
   }),
 });
 
