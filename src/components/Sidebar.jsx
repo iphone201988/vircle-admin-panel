@@ -7,7 +7,8 @@ import {
   Brain,
   Users,
   LogOut,
-  SmartphoneNfc
+  SmartphoneNfc,
+  Settings
 } from "lucide-react";
 
 const Sidebar = ({ onClose }) => {
@@ -33,15 +34,20 @@ const Sidebar = ({ onClose }) => {
       icon: <Brain className="mr-2 h-4 w-4" />,
     },
     {
-      title: "Contacs",
+      title: "Contacts",
       to: "/dashboard/Contact",
       icon: <SmartphoneNfc className="mr-2 h-4 w-4" />,
     },
     // {
     //   title: "Settings",
-    //   to: "/settings",
+    //   to: "/dashboard/Contact",
     //   icon: <Settings className="mr-2 h-4 w-4" />,
     // },
+    {
+      title: "Settings",
+      to: "/dashboard/Settings",
+      icon: <Settings className="mr-2 h-4 w-4" />,
+    },
   ];
 
  const handleLogout = () => {

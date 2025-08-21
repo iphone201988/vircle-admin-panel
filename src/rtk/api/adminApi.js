@@ -66,6 +66,17 @@ export const adminApi = createApi({
       providesTags: ['Contacts'],
     }),
 
+
+    addAdminAiContact: builder.mutation({
+      query: (formData) => ({
+        url: '/add-AdminAiContact',
+        method: 'POST',
+        body: formData,
+      }),
+      invalidatesTags: ['AiContacts'],
+    }),
+
+
   }),
 });
 
@@ -78,4 +89,7 @@ export const {
   useUpdateAiContactMutation,
   useDeleteAiContactMutation,
   useGetContactsQuery,
+  useAddAdminAiContactMutation,
 } = adminApi;
+
+
