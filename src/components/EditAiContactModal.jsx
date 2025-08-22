@@ -8,13 +8,14 @@ import {
   TextField,
   Grid,
 } from "@mui/material";
-import { updateAiContact } from "../utils";
+import { useUpdateAdminAiContactMutation } from "../rtk/api/adminApi";
 import toast from "react-hot-toast";
 import Loader from "./Loader";
 
 function EditAiContactModal({ open, onClose, contact, onUpdate }) {
   const [formData, setFormData] = useState(contact || {});
   const [loading, setLoading] = useState(false);
+  const [updateAdminAiContact] = useUpdateAdminAiContactMutation();
   useEffect(() => {
     setFormData(contact || {});
   }, [contact]);
@@ -27,12 +28,13 @@ function EditAiContactModal({ open, onClose, contact, onUpdate }) {
     try {
       setLoading(true);
       onClose();
-      const response = await updateAiContact(formData.id, formData);
-      onUpdate(); // refetch or refresh the list
+      await updateAdminAiContact({ ...formData, id: formData._id || formData.id }).unwrap();
+      onUpdate && onUpdate();
       toast.success("Contact updated successfully!");
       setLoading(false);
     } catch (err) {
       toast.error("Update failed");
+      setLoading(false);
     }
   };
 

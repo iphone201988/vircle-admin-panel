@@ -1,39 +1,90 @@
-import React, { useState } from 'react';
-import { Upload, User, Save, RotateCcw, Clock, Heart, Settings, Plus, X, Edit, Trash2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Upload, User, Save, RotateCcw, Settings, Plus, X } from 'lucide-react';
+import { useAddAdminAiContactMutation, useGetElementsQuery, useGetAdminAiContactsQuery, useDeleteAdminAiContactMutation, useUpdateAdminAiContactMutation } from '../../rtk/api/adminApi';
+import EditAiContactModal from '../../components/EditAiContactModal.jsx';
 
 
 const initialFormData = {
     type: '',
+    title: '',
+    subTitle: '',
     name: '',
     age: '',
     gender: '',
     relationship: '',
     expertise: '',
-    characteristics: '',
+    characterstics: [],
     canTextEvery: '',
     on: '',
     at: '',
-    whatDoYouWantToHear: '',
+    wantToHear: '',
     aiAvatar: null,
     isActive: true,
 };
 
-const AI_CONTACT_TYPES = [
+const DEFAULT_TYPES = [
     { value: 'new_companion', label: 'New Companion' },
     { value: 'new_assistant', label: 'New Assistant' },
     { value: 'new_expert', label: 'New Expert' },
     { value: 'new_characters', label: 'New Characters' },
 ];
 
-const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
-const TEXT_FREQUENCY = ['Day', 'Week', 'Month'];
-const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DEFAULT_GENDERS = ['Male', 'Female', 'Other'];
+const TEXT_FREQUENCY = [
+    { value: 'Daily', label: 'Daily' },
+    { value: 'Weekly', label: 'Weekly' },
+    { value: 'Monthly', label: 'Monthly' },
+    { value: 'Yearly', label: 'Yearly' },
+    { value: 'Never', label: 'No schedule' },
+];
 
-const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose }) => {
+const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose }) => {
     const [formData, setFormData] = useState(initialFormData);
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [formErrors, setFormErrors] = useState({});
-    const [activeTab, setActiveTab] = useState('basic');
+    const { data: elementsData, isLoading: isElementsLoading, isError: isElementsError } = useGetElementsQuery();
+
+    const elements = elementsData?.data || elementsData || {};
+    const typeOptions = useMemo(() => {
+        const types = elements.types || elements.typeOptions || elements.contactTypes;
+        if (Array.isArray(types)) {
+            return types.map((t) => (typeof t === 'string' ? { value: t, label: t } : t));
+        }
+        return DEFAULT_TYPES;
+    }, [elements]);
+
+    const genderOptions = useMemo(() => {
+        const genders = elements.genders || elements.genderOptions;
+        return Array.isArray(genders) && genders.length ? genders : DEFAULT_GENDERS;
+    }, [elements]);
+
+    const relationshipOptions = useMemo(() => {
+        const rel = elements.relationships || elements.relationshipOptions || elements.relationship;
+        return Array.isArray(rel) && rel.length ? rel : [
+            'No Relationship','Friend','Boyfriend','Girlfriend','Stranger','New acquaintance','Husband','Wife','Mentor','Coach','Personal Assistant','Dad','Mother','Teacher','Manager'
+        ];
+    }, [elements]);
+
+    const expertiseOptions = useMemo(() => {
+        const exp = elements.expertises || elements.expertiseOptions || elements.expertise;
+        return Array.isArray(exp) && exp.length ? exp : [
+            'No Expertise','Wellness Coach','Fitness Trainer','Nutrition Guide','Career Mentor','Business Advisor','Study Buddy','Language Partner','Math Tutor','Cooking Expert','Science Tutor','Writing Coach','Emotional Support','Life Listener','Organizer','Productivity Assistant','Financial Guide','Tech Support','Travel Planner','Fashion Stylist','News Curator','Legal Info Helper','Health Information','Creativity Coach','History Expert','Parenting Advisor','Movie Geek','Music Enthusiast','Art Critic','Bookworm','Theatre Enthusiast','Dance Guide','Wild Curiosities Explorer','Museum Guide','History Aficionado','Photography Mentor','Local Finder'
+        ];
+    }, [elements]);
+
+    const wantToHearOptions = useMemo(() => {
+        const wth = elements.wantToHear || elements.wantToHearOptions || elements.whatDoYouWantToHear;
+        return Array.isArray(wth) && wth.length ? wth : [
+            'Random Message','Greeting','Daily News','Weekly News','Daily Motivation','Mood Boosters','Inspirational Quotes','Check-in on Recent Events','Wellness Check-ins','Dietary Reminders','Water Consumption Reminder','Meditation Reminder','Stretching Reminder','Fun Facts','Weather Forecast','Movie Recommendations','Book Suggestions','Study Tips','Jokes','Role Playing','Language Practise','Cooking Recipes'
+        ];
+    }, [elements]);
+
+    const characteristicOptions = useMemo(() => {
+        const chars = elements.characterstics || elements.charactersticsOptions;
+        return Array.isArray(chars) && chars.length ? chars : [
+            'Adaptable','Adventurous','Affectionate','Agreeable','Ambitious','Amiable','Analytical','Appreciative','Assertive','Attentive','Balanced','Bold','Calm','Caring','Cautious','Charismatic','Charming','Cheerful','Compassionate','Confident','Conscientious','Considerate','Consistent','Constructive','Cooperative','Courageous','Courteous','Creative','Curious','Daring','Decisive','Dedicated','Dependable','Determined','Diligent','Diplomatic','Disciplined','Discreet','Dynamic','Easygoing','Efficient','Empathetic','Energetic','Enthusiastic','Ethical','Even-tempered','Experienced','Fair','Flexible','Focused','Friendly','Frugal','Fun-loving','Funny','Generous','Gentle','Genuine','Good-natured','Gracious','Hardworking','Helpful','Honest','Hopeful','Humble','Humorous','Imaginative','Independent','Innovative','Insightful','Intelligent','Intuitive','Inventive','Joyful','Kind','Knowledgeable','Logical','Loyal','Mature','Meticulous','Motivated','Objective','Observant','Open-minded','Optimistic','Organized','Outgoing','Patient','Perceptive','Persistent','Persuasive','Pleasant','Practical','Proactive','Productive','Protective','Punctual','Rational','Realistic','Reflective','Reliable','Respectful'
+        ];
+    }, [elements]);
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -55,12 +106,16 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
     const validateForm = () => {
         const errors = {};
         if (!formData.type) errors.type = 'Contact type is required';
+        if (!formData.title.trim()) errors.title = 'Title is required';
         if (!formData.name.trim()) errors.name = 'Name is required';
         if (!formData.age.trim()) errors.age = 'Age is required';
         if (!formData.gender) errors.gender = 'Gender is required';
         if (!formData.canTextEvery) errors.canTextEvery = 'Text frequency is required';
         if (formData.age && (isNaN(Number(formData.age)) || Number(formData.age) <= 0)) {
             errors.age = 'Please enter a valid age';
+        }
+        if (!Array.isArray(formData.characterstics)) {
+            errors.characterstics = 'characterstics must be an array';
         }
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
@@ -72,28 +127,21 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
         onSubmit(formData);
     };
 
-    const handleReset = () => {
-        setFormData(initialFormData);
-        setAvatarPreview(null);
-        setFormErrors({});
-        setActiveTab('basic');
-    };
-
     return (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-50">
 
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white border-b border-gray-200 rounded-t-2xl p-6 flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-800">Create AI Contact</h2>
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-200">
+                <div className="sticky top-0 bg-white border-b border-gray-200 rounded-t-xl p-5 flex justify-between items-center">
+                    <h2 className="text-xl font-semibold text-gray-900">Create AI Contact</h2>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                     >
-                        <X size={24} />
+                        <X size={20} />
                     </button>
                 </div>
 
-                <div className="p-6">
+                <div className="p-6 space-y-6">
                     {error && (
                         <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg text-base border border-red-200">
                             {error}
@@ -104,25 +152,30 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
                             {success}
                         </div>
                     )}
+                    {isElementsError && (
+                        <div className="mb-6 p-4 bg-yellow-50 text-yellow-700 rounded-lg text-base border border-yellow-200">
+                            Failed to load some options. Using defaults.
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Avatar Section */}
                         <div className="text-center">
-                            <div className="relative w-28 h-28 mx-auto mb-4">
+                            <div className="relative w-24 h-24 mx-auto mb-3">
                                 {avatarPreview ? (
                                     <img
                                         src={avatarPreview}
                                         alt="Avatar Preview"
-                                        className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
+                                        className="w-full h-full rounded-full object-cover border-4 border-white shadow"
                                     />
                                 ) : (
-                                    <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center border-4 border-white shadow-lg">
-                                        <User size={48} className="text-gray-400" />
+                                    <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center border-4 border-white shadow">
+                                        <User size={36} className="text-gray-400" />
                                     </div>
                                 )}
                             </div>
-                            <label className="cursor-pointer inline-flex items-center px-5 py-2.5 bg-[#1976d2] text-white rounded-lg hover:bg-[#1565c0] transition-colors duration-200 text-base font-medium shadow-md">
-                                <Upload size={18} className="mr-2" />
+                            <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-[#1976d2] text-white rounded-md hover:bg-[#1565c0] transition-colors duration-200 text-sm font-medium shadow">
+                                <Upload size={16} className="mr-2" />
                                 Upload Avatar
                                 <input
                                     type="file"
@@ -132,33 +185,11 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
                                 />
                             </label>
                             {formData.aiAvatar && (
-                                <p className="mt-3 text-sm text-gray-600 truncate max-w-xs mx-auto">{formData.aiAvatar.name}</p>
+                                <p className="mt-2 text-xs text-gray-600 truncate max-w-xs mx-auto">{formData.aiAvatar.name}</p>
                             )}
                         </div>
-
-                        {/* Tab Navigation */}
-                        <div className="flex bg-gray-100 rounded-lg overflow-hidden p-1.5">
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab('basic')}
-                                className={`flex-1 py-3 text-base font-medium flex items-center justify-center transition-colors rounded-md ${activeTab === 'basic' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}
-                            >
-                                <User size={18} className="mr-2" />
-                                Basic Info
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab('communication')}
-                                className={`flex-1 py-3 text-base font-medium flex items-center justify-center transition-colors rounded-md ${activeTab === 'communication' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}
-                            >
-                                <Clock size={18} className="mr-2" />
-                                Schedule
-                            </button>
-                        </div>
-
-                        {/* Tab Content */}
-                        <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                            {activeTab === 'basic' ? (
+                        {/* Form Content */}
+                        <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
                                 <div className="space-y-5">
                                     <div className="grid grid-cols-2 gap-5">
                                         <div>
@@ -166,14 +197,17 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
                                             <select
                                                 value={formData.type}
                                                 onChange={(e) => handleInputChange('type', e.target.value)}
+                                                disabled={isElementsLoading}
                                                 className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.type ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
                                             >
                                                 <option value="">Select Type</option>
-                                                {AI_CONTACT_TYPES.map((type) => (
-                                                    <option key={type.value} value={type.value}>
-                                                        {type.label}
-                                                    </option>
-                                                ))}
+                                                {typeOptions.map((type) => {
+                                                    const value = type.value || type;
+                                                    const label = type.label || type;
+                                                    return (
+                                                        <option key={value} value={value}>{label}</option>
+                                                    );
+                                                })}
                                             </select>
                                             {formErrors.type && (
                                                 <p className="text-sm text-red-500 mt-1.5">{formErrors.type}</p>
@@ -181,6 +215,19 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Title *</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.title}
+                                                    onChange={(e) => handleInputChange('title', e.target.value)}
+                                                    className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.title ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
+                                                    placeholder="Enter title"
+                                                />
+                                                {formErrors.title && (
+                                                    <p className="text-sm text-red-500 mt-1.5">{formErrors.title}</p>
+                                                )}
+                                            </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Name *</label>
                                                 <input
@@ -193,6 +240,17 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
                                                 {formErrors.name && (
                                                     <p className="text-sm text-red-500 mt-1.5">{formErrors.name}</p>
                                                 )}
+                                            </div>
+
+                                            <div className="col-span-2">
+                                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Sub Title</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.subTitle}
+                                                    onChange={(e) => handleInputChange('subTitle', e.target.value)}
+                                                    className={`w-full p-3.5 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
+                                                    placeholder="Enter sub title"
+                                                />
                                             </div>
 
                                             <div>
@@ -219,13 +277,12 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
                                             <select
                                                 value={formData.gender}
                                                 onChange={(e) => handleInputChange('gender', e.target.value)}
+                                                disabled={isElementsLoading}
                                                 className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.gender ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
                                             >
                                                 <option value="">Select Gender</option>
-                                                {GENDER_OPTIONS.map((gender) => (
-                                                    <option key={gender} value={gender}>
-                                                        {gender}
-                                                    </option>
+                                                {genderOptions.map((gender) => (
+                                                    <option key={gender} value={gender}>{gender}</option>
                                                 ))}
                                             </select>
                                             {formErrors.gender && (
@@ -240,24 +297,13 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
                                                 <select
                                                     value={formData.relationship}
                                                     onChange={(e) => handleInputChange('relationship', e.target.value)}
+                                                    disabled={isElementsLoading}
                                                     className="w-full p-3.5 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                                 >
                                                     <option value="">Select Relationship</option>
-                                                    <option value="No Relationship">No Relationship</option>
-                                                    <option value="Friend">Friend</option>
-                                                    <option value="Boyfriend">Boyfriend</option>
-                                                    <option value="Girlfriend">Girlfriend</option>
-                                                    <option value="Stranger">Stranger</option>
-                                                    <option value="New acquaintance">New acquaintance</option>
-                                                    <option value="Husband">Husband</option>
-                                                    <option value="Wife">Wife</option>
-                                                    <option value="Mentor">Mentor</option>
-                                                    <option value="Coach">Coach</option>
-                                                    <option value="Personal Assistant">Personal Assistant</option>
-                                                    <option value="Dad">Dad</option>
-                                                    <option value="Mother">Mother</option>
-                                                    <option value="Teacher">Teacher</option>
-                                                    <option value="Manager">Manager</option>
+                                                    {relationshipOptions.map((rel) => (
+                                                        <option key={rel} value={rel}>{rel}</option>
+                                                    ))}
                                                 </select>
                                             </div>
 
@@ -268,46 +314,13 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
                                                 <select
                                                     value={formData.expertise}
                                                     onChange={(e) => handleInputChange('expertise', e.target.value)}
+                                                    disabled={isElementsLoading}
                                                     className="w-full p-3.5 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                                 >
                                                     <option value="">Select Expertise</option>
-                                                    <option value="No Expertise">No Expertise</option>
-                                                    <option value="Wellness Coach">Wellness Coach</option>
-                                                    <option value="Fitness Trainer">Fitness Trainer</option>
-                                                    <option value="Nutrition Guide">Nutrition Guide</option>
-                                                    <option value="Career Mentor">Career Mentor</option>
-                                                    <option value="Business Advisor">Business Advisor</option>
-                                                    <option value="Study Buddy">Study Buddy</option>
-                                                    <option value="Language Partner">Language Partner</option>
-                                                    <option value="Math Tutor">Math Tutor</option>
-                                                    <option value="Cooking Expert">Cooking Expert</option>
-                                                    <option value="Science Tutor">Science Tutor</option>
-                                                    <option value="Writing Coach">Writing Coach</option>
-                                                    <option value="Emotional Support">Emotional Support</option>
-                                                    <option value="Life Listener">Life Listener</option>
-                                                    <option value="Organizer">Organizer</option>
-                                                    <option value="Productivity Assistant">Productivity Assistant</option>
-                                                    <option value="Financial Guide">Financial Guide</option>
-                                                    <option value="Tech Support">Tech Support</option>
-                                                    <option value="Travel Planner">Travel Planner</option>
-                                                    <option value="Fashion Stylist">Fashion Stylist</option>
-                                                    <option value="News Curator">News Curator</option>
-                                                    <option value="Legal Info Helper">Legal Info Helper</option>
-                                                    <option value="Health Information">Health Information</option>
-                                                    <option value="Creativity Coach">Creativity Coach</option>
-                                                    <option value="History Expert">History Expert</option>
-                                                    <option value="Parenting Advisor">Parenting Advisor</option>
-                                                    <option value="Movie Geek">Movie Geek</option>
-                                                    <option value="Music Enthusiast">Music Enthusiast</option>
-                                                    <option value="Art Critic">Art Critic</option>
-                                                    <option value="Bookworm">Bookworm</option>
-                                                    <option value="Theatre Enthusiast">Theatre Enthusiast</option>
-                                                    <option value="Dance Guide">Dance Guide</option>
-                                                    <option value="Wild Curiosities Explorer">Wild Curiosities Explorer</option>
-                                                    <option value="Museum Guide">Museum Guide</option>
-                                                    <option value="History Aficionado">History Aficionado</option>
-                                                    <option value="Photography Mentor">Photography Mentor</option>
-                                                    <option value="Local Finder">Local Finder</option>
+                                                    {expertiseOptions.map((exp) => (
+                                                        <option key={exp} value={exp}>{exp}</option>
+                                                    ))}
                                                 </select>
                                             </div>
 
@@ -321,158 +334,84 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
 
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Characteristics</label>
-                                        <div className="flex gap-2 mb-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Add new characteristic..."
-                                                className="flex-1 p-2 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            />
-                                            <button
-                                                type="button"
-                                                className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
-                                            >
-                                                <Plus size={16} className="mr-1" />
-                                                Add
-                                            </button>
-                                        </div>
-                                        <div className="max-h-60 overflow-y-auto border border-gray-300 rounded-lg p-2">
-                                            {[
-                                                "Adaptable", "Adventurous", "Affectionate", "Agreeable", "Ambitious", "Amiable", "Analytical",
-                                                "Appreciative", "Assertive", "Attentive", "Balanced", "Bold", "Calm", "Caring", "Cautious",
-                                                "Charismatic", "Charming", "Cheerful", "Compassionate", "Confident", "Conscientious", "Considerate",
-                                                "Consistent", "Constructive", "Cooperative", "Courageous", "Courteous", "Creative", "Curious",
-                                                "Daring", "Decisive", "Dedicated", "Dependable", "Determined", "Diligent", "Diplomatic",
-                                                "Disciplined", "Discreet", "Dynamic", "Easygoing", "Efficient", "Empathetic", "Energetic",
-                                                "Enthusiastic", "Ethical", "Even-tempered", "Experienced", "Fair", "Flexible", "Focused",
-                                                "Friendly", "Frugal", "Fun-loving", "Funny", "Generous", "Gentle", "Genuine", "Good-natured",
-                                                "Gracious", "Hardworking", "Helpful", "Honest", "Hopeful", "Humble", "Humorous", "Imaginative",
-                                                "Independent", "Innovative", "Insightful", "Intelligent", "Intuitive", "Inventive", "Joyful",
-                                                "Kind", "Knowledgeable", "Logical", "Loyal", "Mature", "Meticulous", "Motivated", "Objective",
-                                                "Observant", "Open-minded", "Optimistic", "Organized", "Outgoing", "Patient", "Perceptive",
-                                                "Persistent", "Persuasive", "Pleasant", "Practical", "Proactive", "Productive", "Protective",
-                                                "Punctual", "Rational", "Realistic", "Reflective", "Reliable", "Respectful"
-                                            ].map((characteristic) => (
-                                                <div key={characteristic} className="flex items-center justify-between p-2 hover:bg-gray-100 rounded">
-                                                    <span>{characteristic}</span>
-                                                    <div className="flex gap-1">
-                                                        <button
-                                                            type="button"
-                                                            className="p-1 text-blue-600 hover:bg-blue-100 rounded"
-                                                            title="Edit"
-                                                        >
-                                                            <Edit size={16} />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            className="p-1 text-red-600 hover:bg-red-100 rounded"
-                                                            title="Delete"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                </div>
-                            ) : (
-                                <div className="space-y-5">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Text Frequency *</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">characterstics (multi-select)</label>
                                         <select
-                                            value={formData.canTextEvery}
-                                            onChange={(e) => handleInputChange('canTextEvery', e.target.value)}
-                                            className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.canTextEvery ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
+                                            multiple
+                                            value={formData.characterstics}
+                                            onChange={(e) => {
+                                                const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
+                                                handleInputChange('characterstics', selected);
+                                            }}
+                                            className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.characterstics ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 min-h-[160px]`}
                                         >
-                                            <option value="">Select Frequency</option>
-                                            {TEXT_FREQUENCY.map((freq) => (
-                                                <option key={freq} value={freq}>
-                                                    Every {freq}
-                                                </option>
+                                            {characteristicOptions.map((c) => (
+                                                <option key={c} value={c}>{c}</option>
                                             ))}
                                         </select>
-                                        {formErrors.canTextEvery && (
-                                            <p className="text-sm text-red-500 mt-1.5">{formErrors.canTextEvery}</p>
+                                        {formErrors.characterstics && (
+                                            <p className="text-sm text-red-500 mt-1.5">{formErrors.characterstics}</p>
                                         )}
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-5">
-
-
-
-
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">On</label>
-                                            {formData.canTextEvery === 'Day' ? (
-                                                <div className="w-full p-3.5 text-base bg-gray-100 rounded-lg border border-gray-300 text-gray-500">
-                                                    Not applicable for daily frequency
-                                                </div>
-                                            ) : (
+                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Can text every *</label>
+                                            <select
+                                                value={formData.canTextEvery}
+                                                onChange={(e) => handleInputChange('canTextEvery', e.target.value)}
+                                                className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.canTextEvery ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
+                                            >
+                                                <option value="">Select schedule</option>
+                                                {TEXT_FREQUENCY.map((opt) => (
+                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                ))}
+                                            </select>
+                                            {formErrors.canTextEvery && (
+                                                <p className="text-sm text-red-500 mt-1.5">{formErrors.canTextEvery}</p>
+                                            )}
+                                        </div>
+
+                                        {(formData.canTextEvery === 'Weekly' || formData.canTextEvery === 'Monthly' || formData.canTextEvery === 'Yearly') && (
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1.5">On</label>
                                                 <select
                                                     value={formData.on}
                                                     onChange={(e) => handleInputChange('on', e.target.value)}
                                                     className="w-full p-3.5 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                                 >
-                                                    <option value="">Select {formData.canTextEvery === 'Week' ? 'Day of Week' : formData.canTextEvery === 'Month' ? 'Day of Month' : 'Option'}</option>
-
-                                                    {formData.canTextEvery === 'Week' && (
+                                                    <option value="">Select option</option>
+                                                    {formData.canTextEvery === 'Weekly' && (
                                                         <>
-                                                            <option value="Random">Random</option>
-                                                            <option value="Monday">Monday</option>
-                                                            <option value="Tuesday">Tuesday</option>
-                                                            <option value="Wednesday">Wednesday</option>
-                                                            <option value="Thursday">Thursday</option>
-                                                            <option value="Friday">Friday</option>
-                                                            <option value="Saturday">Saturday</option>
-                                                            <option value="Sunday">Sunday</option>
+                                                            {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d) => (
+                                                                <option key={d} value={d.toLowerCase()}>{d}</option>
+                                                            ))}
                                                         </>
                                                     )}
-
-                                                    {formData.canTextEvery === 'Month' && (
+                                                    {formData.canTextEvery === 'Monthly' && (
                                                         <>
-                                                            <option value="Random">Random</option>
-                                                            <option value="1st">1st</option>
-                                                            <option value="2nd">2nd</option>
-                                                            <option value="3rd">3rd</option>
-                                                            <option value="4th">4th</option>
-                                                            <option value="5th">5th</option>
-                                                            <option value="6th">6th</option>
-                                                            <option value="7th">7th</option>
-                                                            <option value="8th">8th</option>
-                                                            <option value="9th">9th</option>
-                                                            <option value="10th">10th</option>
-                                                            <option value="11th">11th</option>
-                                                            <option value="12th">12th</option>
-                                                            <option value="13th">13th</option>
-                                                            <option value="14th">14th</option>
-                                                            <option value="15th">15th</option>
-                                                            <option value="16th">16th</option>
-                                                            <option value="17th">17th</option>
-                                                            <option value="18th">18th</option>
-                                                            <option value="19th">19th</option>
-                                                            <option value="20th">20th</option>
-                                                            <option value="21st">21st</option>
-                                                            <option value="22nd">22nd</option>
-                                                            <option value="23rd">23rd</option>
-                                                            <option value="24th">24th</option>
-                                                            <option value="25th">25th</option>
-                                                            <option value="26th">26th</option>
-                                                            <option value="27th">27th</option>
-                                                            <option value="28th">28th</option>
-                                                            <option value="29th">29th</option>
-                                                            <option value="30th">30th</option>
-                                                            <option value="Last day of month">Last day of month</option>
+                                                            {[
+                                                                '1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th','13th','14th','15th','16th','17th','18th','19th','20th','21st','22nd','23rd','24th','25th','26th','27th','28th',
+                                                                'Random','Last day of month'
+                                                            ].map((d) => (
+                                                                <option key={d} value={d}>{d}</option>
+                                                            ))}
+                                                        </>
+                                                    )}
+                                                    {formData.canTextEvery === 'Yearly' && (
+                                                        <>
+                                                            {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m) => (
+                                                                <option key={m} value={m.toLowerCase()}>{m}</option>
+                                                            ))}
                                                         </>
                                                     )}
                                                 </select>
-                                            )}
-                                        </div>
+                                            </div>
+                                        )}
+                                    </div>
 
-
+                                    {formData.canTextEvery !== 'Never' && (
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Time</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">At</label>
                                             <input
                                                 type="time"
                                                 value={formData.at}
@@ -480,75 +419,35 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
                                                 className="w-full p-3.5 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                             />
                                         </div>
-                                    </div>
-
-
+                                    )}
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1.5">What do you want to hear?</label>
                                         <select
-                                            value={formData.whatDoYouWantToHear}
-                                            onChange={(e) => handleInputChange('whatDoYouWantToHear', e.target.value)}
+                                            value={formData.wantToHear}
+                                            onChange={(e) => handleInputChange('wantToHear', e.target.value)}
+                                            disabled={isElementsLoading}
                                             className="w-full p-3.5 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                         >
                                             <option value="">Select what you want to hear</option>
-                                            <option value="Random Message">Random Message</option>
-                                            <option value="Greeting">Greeting</option>
-                                            <option value="Daily News">Daily News</option>
-                                            <option value="Weekly News">Weekly News</option>
-                                            <option value="Daily Motivation">Daily Motivation</option>
-                                            <option value="Mood Boosters">Mood Boosters</option>
-                                            <option value="Inspirational Quotes">Inspirational Quotes</option>
-                                            <option value="Check-in on Recent Events">Check-in on Recent Events</option>
-                                            <option value="Wellness Check-ins">Wellness Check-ins</option>
-                                            <option value="Dietary Reminders">Dietary Reminders</option>
-                                            <option value="Water Consumption Reminder">Water Consumption Reminder</option>
-                                            <option value="Meditation Reminder">Meditation Reminder</option>
-                                            <option value="Stretching Reminder">Stretching Reminder</option>
-                                            <option value="Fun Facts">Fun Facts</option>
-                                            <option value="Weather Forecast">Weather Forecast</option>
-                                            <option value="Movie Recommendations">Movie Recommendations</option>
-                                            <option value="Book Suggestions">Book Suggestions</option>
-                                            <option value="Study Tips">Study Tips</option>
-                                            <option value="Jokes">Jokes</option>
-                                            <option value="Role Playing">Role Playing</option>
-                                            <option value="Language Practise">Language Practise</option>
-                                            <option value="Cooking Recipes">Cooking Recipes</option>
+                                            {wantToHearOptions.map((opt) => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
                                         </select>
                                     </div>
-
-
-
-
-                                </div>
-                            )}
                         </div>
-
-                        {/* Status */}
-                        {/* <div className="flex items-center justify-center py-2">
-                            <label className="flex items-center space-x-3">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.isActive}
-                                    onChange={(e) => handleInputChange('isActive', e.target.checked)}
-                                    className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                />
-                                <span className="text-base font-medium text-gray-700 flex items-center">
-                                    <Heart
-                                        size={18}
-                                        className={`mr-2 ${formData.isActive ? 'text-blue-600' : 'text-gray-400'}`}
-                                    />
-                                    Active Contact
-                                </span>
-                            </label>
-                        </div> */}
+                        </div>
 
                         {/* Action Buttons */}
                         <div className="flex gap-5 pt-5">
                             <button
                                 type="button"
-                                onClick={handleReset}
-                                disabled={isLoading}
+                                onClick={() => {
+                                    setFormData(initialFormData);
+                                    setAvatarPreview(null);
+                                    setFormErrors({});
+                                }}
+                                disabled={isSubmitting}
                                 className="flex-1 px-5 py-3.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 disabled:opacity-50 flex items-center justify-center text-base font-medium shadow-sm"
                             >
                                 <RotateCcw size={18} className="mr-2" />
@@ -556,10 +455,10 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
                             </button>
                             <button
                                 type="submit"
-                                disabled={isLoading}
+                                disabled={isSubmitting}
                                 className="flex-2 px-5 py-3.5 bg-[#1976d2] text-white rounded-lg hover:bg-[#1565c0] transition-all duration-200 disabled:opacity-50 flex items-center justify-center text-base font-medium shadow-md"
                             >
-                                {isLoading ? (
+                                {isSubmitting ? (
                                     <svg
                                         className="animate-spin h-5 w-5 mr-2 text-white"
                                         viewBox="0 0 24 24"
@@ -581,7 +480,7 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
                                 ) : (
                                     <Save size={18} className="mr-2" />
                                 )}
-                                {isLoading ? 'Creating...' : 'Create Contact'}
+                                {isSubmitting ? 'Creating...' : 'Create Contact'}
                             </button>
                         </div>
                     </form>
@@ -593,31 +492,76 @@ const AiContactForm = ({ onSubmit, isLoading = false, error, success, onClose })
 
 const SettingsPage = () => {
     const [showAiContactForm, setShowAiContactForm] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [addAdminAiContact, { isLoading: isSubmitting } ] = useAddAdminAiContactMutation();
+    const [filterType, setFilterType] = useState('new_assistant');
+    const { data: listData, refetch } = useGetAdminAiContactsQuery(filterType);
+    const [deleteAdminAiContact] = useDeleteAdminAiContactMutation();
+    const [openEdit, setOpenEdit] = useState(false);
+    const [selectedContact, setSelectedContact] = useState(null);
+
+    const aiContactsRaw = listData?.data ?? listData?.AiContacts ?? listData ?? [];
+    console.log('=============jasdhjkasdhjashdajkushd',aiContactsRaw.contact);
+    const aiContacts = Array.isArray(aiContactsRaw.contact)
+        ? aiContactsRaw.contact
+        : Array.isArray(aiContactsRaw?.data)
+            ? aiContactsRaw.data
+            : Array.isArray(aiContactsRaw?.AiContacts)
+                ? aiContactsRaw.AiContacts
+                : (aiContactsRaw && aiContactsRaw._id ? [aiContactsRaw] : []);
+
+    const toTwelveHourNoSpace = (time24) => {
+        if (!time24) return '';
+        const [hhStr, mm] = time24.split(':');
+        let hh = parseInt(hhStr, 10);
+        const period = hh >= 12 ? 'PM' : 'AM';
+        hh = hh % 12;
+        if (hh === 0) hh = 12;
+        const hhPadded = hh < 10 ? `0${hh}` : `${hh}`;
+        return `${hhPadded}:${mm}${period}`;
+    };
 
     const handleSubmit = async (formData) => {
-        setIsLoading(true);
         setError('');
         setSuccess('');
-
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            const formattedAt = formData.canTextEvery === 'Never' ? '' : toTwelveHourNoSpace(formData.at);
+            const form = new FormData();
+            form.append('name', formData.name);
+            form.append('age', String(formData.age || ''));
+            form.append('gender', formData.gender || '');
+            form.append('relationship', formData.relationship || '');
+            form.append('expertise', formData.expertise || '');
+            form.append('canTextEvery', formData.canTextEvery || '');
+            form.append('type', formData.type || '');
+            if (formData.on && (formData.canTextEvery === 'Weekly' || formData.canTextEvery === 'Monthly' || formData.canTextEvery === 'Yearly')) {
+                form.append('on', String(formData.on));
+            }
+            if (formattedAt) {
+                form.append('at', formattedAt);
+            }
+            form.append('title', formData.title || '');
+            if (formData.subTitle) {
+                form.append('subTitle', formData.subTitle);
+            }
+            form.append('wantToHear', formData.wantToHear || '');
+            if (Array.isArray(formData.characterstics)) {
+                formData.characterstics.forEach((c) => form.append('characterstics[]', c));
+            }
+            if (formData.aiAvatar instanceof File) {
+                form.append('aiAvatar', formData.aiAvatar);
+            }
 
-            // In a real app, you would send the data to your backend here
-            console.log('Form submitted:', formData);
-
+            await addAdminAiContact(form).unwrap();
             setSuccess('AI Contact created successfully!');
             setTimeout(() => {
                 setShowAiContactForm(false);
                 setSuccess('');
-            }, 2000);
+            }, 1200);
         } catch (err) {
-            setError('Failed to create AI Contact. Please try again.');
-        } finally {
-            setIsLoading(false);
+            const message = err?.data?.message || err?.error || 'Failed to create AI Contact. Please try again.';
+            setError(message);
         }
     };
 
@@ -684,6 +628,72 @@ const SettingsPage = () => {
                             </button>
                         </div>
 
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {[
+                                {label: 'Experts', value: 'new_expert'},
+                                {label: 'Companion', value: 'new_companion'},
+                                {label: 'Assistant', value: 'new_assistant'},
+                                {label: 'Character', value: 'new_characters'},
+                            ].map((f) => (
+                                <button
+                                    key={f.value}
+                                    onClick={() => setFilterType(f.value)}
+                                    className={`px-3 py-1.5 rounded-md border ${filterType===f.value? 'bg-[#1976d2] text-white border-[#1976d2]':'bg-white text-gray-700 border-gray-300'} hover:shadow-sm`}
+                                >{f.label}</button>
+                            ))}
+                        </div>
+
+                        {aiContacts.length ? (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full text-left text-sm">
+                                    <thead className="bg-gray-50 text-gray-700">
+                                        <tr>
+                                            <th className="px-4 py-2">Name</th>
+                                            <th className="px-4 py-2">Expertise</th>
+                                            <th className="px-4 py-2">Age</th>
+                                            <th className="px-4 py-2">Relationship</th>
+                                            <th className="px-4 py-2">Gender</th>
+                                            <th className="px-4 py-2">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {aiContacts.map((c) => (
+                                            <tr key={c._id} className="border-b">
+                                                <td className="px-4 py-2">{c.name}</td>
+                                                <td className="px-4 py-2">{c.expertise}</td>
+                                                <td className="px-4 py-2">{c.age}</td>
+                                                <td className="px-4 py-2">{c.relationship}</td>
+                                                <td className="px-4 py-2">{typeof c.gender==='string'? c.gender.charAt(0).toUpperCase()+c.gender.slice(1).toLowerCase():''}</td>
+                                                <td className="px-4 py-2 flex gap-2">
+                                                    <button
+                                                        onClick={() => { setSelectedContact(c); setOpenEdit(true); }}
+                                                        className="px-2 py-1 text-xs rounded bg-blue-600 text-white"
+                                                    >Edit</button>
+                                                    <button
+                                                        onClick={async () => { try { await deleteAdminAiContact(c._id).unwrap(); refetch(); } catch(e){} }}
+                                                        className="px-2 py-1 text-xs rounded bg-red-600 text-white"
+                                                    >Delete</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="bg-gray-50 rounded-lg p-8 text-center border-2 border-dashed border-gray-300">
+                                <User className="mx-auto text-gray-400 mb-3" size={40} />
+                                <h3 className="font-medium text-gray-700 mb-1">No AI Contacts</h3>
+                                <p className="text-gray-600 text-sm mb-4">Choose a type or create one</p>
+                            </div>
+                        )}
+
+                        <EditAiContactModal
+                            open={openEdit}
+                            onClose={() => { setOpenEdit(false); setSelectedContact(null); }}
+                            contact={selectedContact}
+                            onUpdate={() => { refetch(); setOpenEdit(false); setSelectedContact(null); }}
+                        />
+
                         <div className="bg-gray-50 rounded-lg p-8 text-center border-2 border-dashed border-gray-300">
                             <User className="mx-auto text-gray-400 mb-3" size={40} />
                             <h3 className="font-medium text-gray-700 mb-1">No AI Contacts Yet</h3>
@@ -704,7 +714,7 @@ const SettingsPage = () => {
             {showAiContactForm && (
                 <AiContactForm
                     onSubmit={handleSubmit}
-                    isLoading={isLoading}
+                    isSubmitting={isSubmitting}
                     error={error}
                     success={success}
                     onClose={() => setShowAiContactForm(false)}

@@ -67,11 +67,44 @@ export const adminApi = createApi({
     }),
 
 
+    // Create AI contact (absolute URL to satisfy requirement)
     addAdminAiContact: builder.mutation({
-      query: (formData) => ({
-        url: '/add-AdminAiContact',
+      query: (payload) => ({
+        url: '/addAdminAiContact',
         method: 'POST',
-        body: formData,
+        body: payload,
+      }),
+      invalidatesTags: ['AiContacts'],
+    }),
+
+    // Fetch dropdown options for the Create AI Contact form (absolute URL)
+    getElements: builder.query({
+      query: () => 'https://52.200.106.168:8000/api/v1/user/getElements',
+      providesTags: [],
+    }),
+
+    // List admin AI contacts filtered by type
+    getAdminAiContacts: builder.query({
+      query: (typeValue) => `/getAdminAiContacts?type=${encodeURIComponent(typeValue)}`,
+      providesTags: ['AiContacts'],
+    }),
+
+    // Update admin AI contact
+    updateAdminAiContact: builder.mutation({
+      query: (payload) => ({
+        url: 'https://52.200.106.168:8000/api/v1/admin/updateAdminAiContact',
+        method: 'PUT',
+        body: payload,
+      }),
+      invalidatesTags: ['AiContacts'],
+    }),
+
+    // Delete admin AI contact
+    deleteAdminAiContact: builder.mutation({
+      query: (id) => ({
+        url: 'https://52.200.106.168:8000/api/v1/admin/DeleteAdminAiContac',
+        method: 'DELETE',
+        body: { id },
       }),
       invalidatesTags: ['AiContacts'],
     }),
@@ -90,6 +123,10 @@ export const {
   useDeleteAiContactMutation,
   useGetContactsQuery,
   useAddAdminAiContactMutation,
+  useGetElementsQuery,
+  useGetAdminAiContactsQuery,
+  useUpdateAdminAiContactMutation,
+  useDeleteAdminAiContactMutation,
 } = adminApi;
 
 
