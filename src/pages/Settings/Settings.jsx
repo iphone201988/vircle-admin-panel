@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Upload, User, Save, RotateCcw, Settings, Plus, X } from 'lucide-react';
-import { useAddAdminAiContactMutation, useGetElementsQuery, useGetAdminAiContactsQuery, useDeleteAdminAiContactMutation, useUpdateAdminAiContactMutation } from '../../rtk/api/adminApi';
+import { Upload, User, Save, RotateCcw, Settings, Plus, X, Trash2, Edit } from 'lucide-react';
+import { useAddAdminAiContactMutation, useGetElementsQuery, useGetAdminAiContactsQuery, useDeleteAdminAiContactMutation, useUpdateAdminAiContactMutation, useEditElementsMutation } from '../../rtk/api/adminApi';
 import EditAiContactModal from '../../components/EditAiContactModal.jsx';
 
 
@@ -59,28 +59,30 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
     }, [elements]);
 
     const relationshipOptions = useMemo(() => {
-        const rel = elements.relationships || elements.relationshipOptions || elements.relationship;
+      console.log('elements==========', elements?.elements);
+        const rel = elements?.elements?.relationships || elements.relationshipOptions || elements.relationship;
+        
         return Array.isArray(rel) && rel.length ? rel : [
             'No Relationship','Friend','Boyfriend','Girlfriend','Stranger','New acquaintance','Husband','Wife','Mentor','Coach','Personal Assistant','Dad','Mother','Teacher','Manager'
         ];
     }, [elements]);
 
     const expertiseOptions = useMemo(() => {
-        const exp = elements.expertises || elements.expertiseOptions || elements.expertise;
+        const exp = elements?.elements?.experties || elements.expertiseOptions || elements.expertise;
         return Array.isArray(exp) && exp.length ? exp : [
             'No Expertise','Wellness Coach','Fitness Trainer','Nutrition Guide','Career Mentor','Business Advisor','Study Buddy','Language Partner','Math Tutor','Cooking Expert','Science Tutor','Writing Coach','Emotional Support','Life Listener','Organizer','Productivity Assistant','Financial Guide','Tech Support','Travel Planner','Fashion Stylist','News Curator','Legal Info Helper','Health Information','Creativity Coach','History Expert','Parenting Advisor','Movie Geek','Music Enthusiast','Art Critic','Bookworm','Theatre Enthusiast','Dance Guide','Wild Curiosities Explorer','Museum Guide','History Aficionado','Photography Mentor','Local Finder'
         ];
     }, [elements]);
 
     const wantToHearOptions = useMemo(() => {
-        const wth = elements.wantToHear || elements.wantToHearOptions || elements.whatDoYouWantToHear;
+        const wth = elements?.elements?.whatYouWantToHear || elements.wantToHearOptions || elements.whatDoYouWantToHear;
         return Array.isArray(wth) && wth.length ? wth : [
             'Random Message','Greeting','Daily News','Weekly News','Daily Motivation','Mood Boosters','Inspirational Quotes','Check-in on Recent Events','Wellness Check-ins','Dietary Reminders','Water Consumption Reminder','Meditation Reminder','Stretching Reminder','Fun Facts','Weather Forecast','Movie Recommendations','Book Suggestions','Study Tips','Jokes','Role Playing','Language Practise','Cooking Recipes'
         ];
     }, [elements]);
 
     const characteristicOptions = useMemo(() => {
-        const chars = elements.characterstics || elements.charactersticsOptions;
+        const chars = elements?.elements?.characteristics || elements.charactersticsOptions;
         return Array.isArray(chars) && chars.length ? chars : [
             'Adaptable','Adventurous','Affectionate','Agreeable','Ambitious','Amiable','Analytical','Appreciative','Assertive','Attentive','Balanced','Bold','Calm','Caring','Cautious','Charismatic','Charming','Cheerful','Compassionate','Confident','Conscientious','Considerate','Consistent','Constructive','Cooperative','Courageous','Courteous','Creative','Curious','Daring','Decisive','Dedicated','Dependable','Determined','Diligent','Diplomatic','Disciplined','Discreet','Dynamic','Easygoing','Efficient','Empathetic','Energetic','Enthusiastic','Ethical','Even-tempered','Experienced','Fair','Flexible','Focused','Friendly','Frugal','Fun-loving','Funny','Generous','Gentle','Genuine','Good-natured','Gracious','Hardworking','Helpful','Honest','Hopeful','Humble','Humorous','Imaginative','Independent','Innovative','Insightful','Intelligent','Intuitive','Inventive','Joyful','Kind','Knowledgeable','Logical','Loyal','Mature','Meticulous','Motivated','Objective','Observant','Open-minded','Optimistic','Organized','Outgoing','Patient','Perceptive','Persistent','Persuasive','Pleasant','Practical','Proactive','Productive','Protective','Punctual','Rational','Realistic','Reflective','Reliable','Respectful'
         ];
@@ -128,16 +130,24 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
     };
 
     return (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
 
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-200">
-                <div className="sticky top-0 bg-white border-b border-gray-200 rounded-t-xl p-5 flex justify-between items-center">
-                    <h2 className="text-xl font-semibold text-gray-900">Create AI Contact</h2>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-200 scrollbar-hide">
+                <div className="sticky top-0 bg-white border-b border-gray-200 rounded-t-2xl p-6 flex justify-between items-center">
+                    <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <User className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-semibold text-gray-900">Create AI Contact</h2>
+                            <p className="text-sm text-gray-500">Add a new AI companion to your contacts</p>
+                        </div>
+                    </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                     >
-                        <X size={20} />
+                        <X size={20} className="text-gray-500" />
                     </button>
                 </div>
 
@@ -161,20 +171,20 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Avatar Section */}
                         <div className="text-center">
-                            <div className="relative w-24 h-24 mx-auto mb-3">
+                            <div className=" w-28 h-28 mx-auto mb-4">
                                 {avatarPreview ? (
                                     <img
                                         src={avatarPreview}
                                         alt="Avatar Preview"
-                                        className="w-full h-full rounded-full object-cover border-4 border-white shadow"
+                                        className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
                                     />
                                 ) : (
-                                    <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center border-4 border-white shadow">
-                                        <User size={36} className="text-gray-400" />
+                                    <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border-4 border-white shadow-lg">
+                                        <User size={40} className="text-gray-400" />
                                     </div>
                                 )}
                             </div>
-                            <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-[#1976d2] text-white rounded-md hover:bg-[#1565c0] transition-colors duration-200 text-sm font-medium shadow">
+                            <label className="cursor-pointer inline-flex items-center px-5 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 text-sm font-medium shadow-md">
                                 <Upload size={16} className="mr-2" />
                                 Upload Avatar
                                 <input
@@ -189,16 +199,16 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
                             )}
                         </div>
                         {/* Form Content */}
-                        <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                        <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                                 <div className="space-y-5">
                                     <div className="grid grid-cols-2 gap-5">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Contact Type *</label>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Contact Type *</label>
                                             <select
                                                 value={formData.type}
                                                 onChange={(e) => handleInputChange('type', e.target.value)}
                                                 disabled={isElementsLoading}
-                                                className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.type ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
+                                                className={`w-full p-4 text-base bg-white rounded-lg border-2 transition-all duration-200 ${formErrors.type ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'} focus:ring-4 focus:outline-none`}
                                             >
                                                 <option value="">Select Type</option>
                                                 {typeOptions.map((type) => {
@@ -210,62 +220,62 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
                                                 })}
                                             </select>
                                             {formErrors.type && (
-                                                <p className="text-sm text-red-500 mt-1.5">{formErrors.type}</p>
+                                                <p className="text-sm text-red-500 mt-1">{formErrors.type}</p>
                                             )}
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Title *</label>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Title *</label>
                                                 <input
                                                     type="text"
                                                     value={formData.title}
                                                     onChange={(e) => handleInputChange('title', e.target.value)}
-                                                    className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.title ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
+                                                    className={`w-full p-4 text-base bg-white rounded-lg border-2 transition-all duration-200 ${formErrors.title ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'} focus:ring-4 focus:outline-none`}
                                                     placeholder="Enter title"
                                                 />
                                                 {formErrors.title && (
-                                                    <p className="text-sm text-red-500 mt-1.5">{formErrors.title}</p>
+                                                    <p className="text-sm text-red-500 mt-1">{formErrors.title}</p>
                                                 )}
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Name *</label>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Name *</label>
                                                 <input
                                                     type="text"
                                                     value={formData.name}
                                                     onChange={(e) => handleInputChange('name', e.target.value)}
-                                                    className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.name ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
+                                                    className={`w-full p-4 text-base bg-white rounded-lg border-2 transition-all duration-200 ${formErrors.name ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'} focus:ring-4 focus:outline-none`}
                                                     placeholder="Enter name"
                                                 />
                                                 {formErrors.name && (
-                                                    <p className="text-sm text-red-500 mt-1.5">{formErrors.name}</p>
+                                                    <p className="text-sm text-red-500 mt-1">{formErrors.name}</p>
                                                 )}
                                             </div>
 
                                             <div className="col-span-2">
-                                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Sub Title</label>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Sub Title</label>
                                                 <input
                                                     type="text"
                                                     value={formData.subTitle}
                                                     onChange={(e) => handleInputChange('subTitle', e.target.value)}
-                                                    className={`w-full p-3.5 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
+                                                    className="w-full p-4 text-base bg-white rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-200 focus:outline-none"
                                                     placeholder="Enter sub title"
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Age *</label>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Age *</label>
                                                 <input
                                                     type="number"
                                                     value={formData.age}
                                                     onChange={(e) => handleInputChange('age', e.target.value)}
-                                                    className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.age ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
+                                                    className={`w-full p-4 text-base bg-white rounded-lg border-2 transition-all duration-200 ${formErrors.age ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'} focus:ring-4 focus:outline-none`}
                                                     placeholder="Age"
                                                     min="1"
                                                     max="120"
                                                 />
                                                 {formErrors.age && (
-                                                    <p className="text-sm text-red-500 mt-1.5">{formErrors.age}</p>
+                                                    <p className="text-sm text-red-500 mt-1">{formErrors.age}</p>
                                                 )}
                                             </div>
                                         </div>
@@ -273,12 +283,12 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
 
                                     <div className="grid grid-cols-2 gap-5">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Gender *</label>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Gender *</label>
                                             <select
                                                 value={formData.gender}
                                                 onChange={(e) => handleInputChange('gender', e.target.value)}
                                                 disabled={isElementsLoading}
-                                                className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.gender ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
+                                                className={`w-full p-4 text-base bg-white rounded-lg border-2 transition-all duration-200 ${formErrors.gender ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'} focus:ring-4 focus:outline-none`}
                                             >
                                                 <option value="">Select Gender</option>
                                                 {genderOptions.map((gender) => (
@@ -286,19 +296,19 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
                                                 ))}
                                             </select>
                                             {formErrors.gender && (
-                                                <p className="text-sm text-red-500 mt-1.5">{formErrors.gender}</p>
+                                                <p className="text-sm text-red-500 mt-1">{formErrors.gender}</p>
                                             )}
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Relationship</label>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Relationship</label>
                                                 <select
                                                     value={formData.relationship}
                                                     onChange={(e) => handleInputChange('relationship', e.target.value)}
                                                     disabled={isElementsLoading}
-                                                    className="w-full p-3.5 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                                                    className="w-full p-4 text-base bg-white rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-200 focus:outline-none"
                                                 >
                                                     <option value="">Select Relationship</option>
                                                     {relationshipOptions.map((rel) => (
@@ -310,12 +320,12 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
 
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Expertise</label>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Expertise</label>
                                                 <select
                                                     value={formData.expertise}
                                                     onChange={(e) => handleInputChange('expertise', e.target.value)}
                                                     disabled={isElementsLoading}
-                                                    className="w-full p-3.5 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                                                    className="w-full p-4 text-base bg-white rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-200 focus:outline-none"
                                                 >
                                                     <option value="">Select Expertise</option>
                                                     {expertiseOptions.map((exp) => (
@@ -334,7 +344,7 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
 
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">characterstics (multi-select)</label>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Characteristics (multi-select)</label>
                                         <select
                                             multiple
                                             value={formData.characterstics}
@@ -342,24 +352,24 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
                                                 const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
                                                 handleInputChange('characterstics', selected);
                                             }}
-                                            className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.characterstics ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 min-h-[160px]`}
+                                            className={`w-full p-4 text-base bg-white rounded-lg border-2 transition-all duration-200 min-h-[160px] ${formErrors.characterstics ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'} focus:ring-4 focus:outline-none`}
                                         >
                                             {characteristicOptions.map((c) => (
                                                 <option key={c} value={c}>{c}</option>
                                             ))}
                                         </select>
                                         {formErrors.characterstics && (
-                                            <p className="text-sm text-red-500 mt-1.5">{formErrors.characterstics}</p>
+                                            <p className="text-sm text-red-500 mt-1">{formErrors.characterstics}</p>
                                         )}
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-5">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Can text every *</label>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Can text every *</label>
                                             <select
                                                 value={formData.canTextEvery}
                                                 onChange={(e) => handleInputChange('canTextEvery', e.target.value)}
-                                                className={`w-full p-3.5 text-base bg-white rounded-lg border ${formErrors.canTextEvery ? 'border-red-400' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
+                                                className={`w-full p-4 text-base bg-white rounded-lg border-2 transition-all duration-200 ${formErrors.canTextEvery ? 'border-red-400 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'} focus:ring-4 focus:outline-none`}
                                             >
                                                 <option value="">Select schedule</option>
                                                 {TEXT_FREQUENCY.map((opt) => (
@@ -367,17 +377,17 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
                                                 ))}
                                             </select>
                                             {formErrors.canTextEvery && (
-                                                <p className="text-sm text-red-500 mt-1.5">{formErrors.canTextEvery}</p>
+                                                <p className="text-sm text-red-500 mt-1">{formErrors.canTextEvery}</p>
                                             )}
                                         </div>
 
                                         {(formData.canTextEvery === 'Weekly' || formData.canTextEvery === 'Monthly' || formData.canTextEvery === 'Yearly') && (
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1.5">On</label>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">On</label>
                                                 <select
                                                     value={formData.on}
                                                     onChange={(e) => handleInputChange('on', e.target.value)}
-                                                    className="w-full p-3.5 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                                                    className="w-full p-4 text-base bg-white rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-200 focus:outline-none"
                                                 >
                                                     <option value="">Select option</option>
                                                     {formData.canTextEvery === 'Weekly' && (
@@ -411,23 +421,23 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
 
                                     {formData.canTextEvery !== 'Never' && (
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1.5">At</label>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">At</label>
                                             <input
                                                 type="time"
                                                 value={formData.at}
                                                 onChange={(e) => handleInputChange('at', e.target.value)}
-                                                className="w-full p-3.5 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                                                className="w-full p-4 text-base bg-white rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-200 focus:outline-none"
                                             />
                                         </div>
                                     )}
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">What do you want to hear?</label>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">What do you want to hear?</label>
                                         <select
                                             value={formData.wantToHear}
                                             onChange={(e) => handleInputChange('wantToHear', e.target.value)}
                                             disabled={isElementsLoading}
-                                            className="w-full p-3.5 text-base bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                                            className="w-full p-4 text-base bg-white rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-200 focus:outline-none"
                                         >
                                             <option value="">Select what you want to hear</option>
                                             {wantToHearOptions.map((opt) => (
@@ -439,7 +449,7 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex gap-5 pt-5">
+                        <div className="flex gap-4 pt-6">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -448,7 +458,7 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
                                     setFormErrors({});
                                 }}
                                 disabled={isSubmitting}
-                                className="flex-1 px-5 py-3.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 disabled:opacity-50 flex items-center justify-center text-base font-medium shadow-sm"
+                                className="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 disabled:opacity-50 flex items-center justify-center text-base font-medium shadow-sm"
                             >
                                 <RotateCcw size={18} className="mr-2" />
                                 Reset
@@ -456,7 +466,7 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="flex-2 px-5 py-3.5 bg-[#1976d2] text-white rounded-lg hover:bg-[#1565c0] transition-all duration-200 disabled:opacity-50 flex items-center justify-center text-base font-medium shadow-md"
+                                className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 flex items-center justify-center text-base font-medium shadow-md"
                             >
                                 {isSubmitting ? (
                                     <svg
@@ -490,19 +500,161 @@ const AiContactForm = ({ onSubmit, isSubmitting = false, error, success, onClose
     );
 };
 
+const ElementManagementSection = ({ elementName, elementValues, onAddValue, onDeleteValue, onEditValue, isLoading }) => {
+    const [newValue, setNewValue] = useState('');
+    const [isAdding, setIsAdding] = useState(false);
+    const [editingValue, setEditingValue] = useState(null);
+    const [editInputValue, setEditInputValue] = useState('');
+
+    const handleAddValue = async () => {
+        if (!newValue.trim()) return;
+        setIsAdding(true);
+        try {
+            await onAddValue(newValue.trim());
+            setNewValue('');
+        } catch (error) {
+            console.error('Failed to add value:', error);
+        } finally {
+            setIsAdding(false);
+        }
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleAddValue();
+        }
+    };
+
+    const handleEditValue = async () => {
+        if (!editInputValue.trim() || editInputValue.trim() === editingValue) {
+            setEditingValue(null);
+            setEditInputValue('');
+            return;
+        }
+        
+        try {
+            await onEditValue(editingValue, editInputValue.trim());
+            setEditingValue(null);
+            setEditInputValue('');
+        } catch (error) {
+            console.error('Failed to edit value:', error);
+        }
+    };
+
+    const handleEditKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleEditValue();
+        } else if (e.key === 'Escape') {
+            setEditingValue(null);
+            setEditInputValue('');
+        }
+    };
+
+    const startEditing = (value) => {
+        setEditingValue(value);
+        setEditInputValue(value);
+    };
+
+    return (
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 capitalize">
+                {elementName.replace(/([A-Z])/g, ' $1').trim()}
+            </h3>
+            
+            <div className="space-y-4">
+                {/* Add new value */}
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        value={newValue}
+                        onChange={(e) => setNewValue(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder={`Add new ${elementName.toLowerCase()}`}
+                        className="flex-1 p-3 text-sm bg-white rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 focus:outline-none"
+                        disabled={isLoading || isAdding}
+                    />
+                    <button
+                        onClick={handleAddValue}
+                        disabled={!newValue.trim() || isLoading || isAdding}
+                        className="px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    >
+                        {isAdding ? (
+                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                        ) : (
+                            <Plus size={16} />
+                        )}
+                    </button>
+                </div>
+
+                {/* Values list */}
+                <div className="max-h-60 overflow-y-auto">
+                    {elementValues && elementValues.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {elementValues.map((value, index) => (
+                                <div
+                                    key={index}
+                                    className="group flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all duration-200 cursor-pointer"
+                                    title={value}
+                                    onClick={() => startEditing(value)}
+                                >
+                                    {editingValue === value ? (
+                                        <input
+                                            type="text"
+                                            value={editInputValue}
+                                            onChange={(e) => setEditInputValue(e.target.value)}
+                                            onKeyPress={handleEditKeyPress}
+                                            onBlur={handleEditValue}
+                                            className="flex-1 p-1 text-sm bg-white rounded border border-blue-300 focus:border-blue-500 focus:outline-none"
+                                            autoFocus
+                                        />
+                                    ) : (
+                                        <span className="text-sm text-gray-700 flex-1 break-words">{value}</span>
+                                    )}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDeleteValue(value);
+                                        }}
+                                        disabled={isLoading}
+                                        className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                                        title="Delete value"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-gray-500">
+                            <p className="text-sm">No values added yet</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const SettingsPage = () => {
     const [showAiContactForm, setShowAiContactForm] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [addAdminAiContact, { isLoading: isSubmitting } ] = useAddAdminAiContactMutation();
+    const [addAdminAiContact, { isLoading: isSubmitting }] = useAddAdminAiContactMutation();
     const [filterType, setFilterType] = useState('new_assistant');
     const { data: listData, refetch } = useGetAdminAiContactsQuery(filterType);
     const [deleteAdminAiContact] = useDeleteAdminAiContactMutation();
     const [openEdit, setOpenEdit] = useState(false);
     const [selectedContact, setSelectedContact] = useState(null);
+    const [editElements, { isLoading: isEditingElements }] = useEditElementsMutation();
+    const { data: elementsData, isLoading: isElementsLoading, refetch: refetchElements } = useGetElementsQuery();
+
+    const elements = elementsData?.data || elementsData || {};
+    const elementsList = elements?.elements || {};
 
     const aiContactsRaw = listData?.data ?? listData?.AiContacts ?? listData ?? [];
-    console.log('=============jasdhjkasdhjashdajkushd',aiContactsRaw.contact);
     const aiContacts = Array.isArray(aiContactsRaw.contact)
         ? aiContactsRaw.contact
         : Array.isArray(aiContactsRaw?.data)
@@ -565,148 +717,189 @@ const SettingsPage = () => {
         }
     };
 
+    const handleAddElementValue = async (elementName, value) => {
+        try {
+            const payload = {
+                [elementName]: value,
+                type: 'update'
+            };
+            await editElements(payload).unwrap();
+            await refetchElements();
+            setSuccess(`${elementName} value added successfully!`);
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            const message = err?.data?.message || err?.error || `Failed to add ${elementName} value. Please try again.`;
+            setError(message);
+            setTimeout(() => setError(''), 5000);
+        }
+    };
+
+    const handleDeleteElementValue = async (elementName, value) => {
+        try {
+            const payload = {
+                [elementName]: value,
+                type: 'delete'
+            };
+            await editElements(payload).unwrap();
+            await refetchElements();
+            setSuccess(`${elementName} value deleted successfully!`);
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            const message = err?.data?.message || err?.error || `Failed to delete ${elementName} value. Please try again.`;
+            setError(message);
+            setTimeout(() => setError(''), 5000);
+        }
+    };
+
+    const handleEditElementValue = async (elementName, oldValue, newValue) => {
+        try {
+            // First delete the old value
+            const deletePayload = {
+                [elementName]: oldValue,
+                type: 'delete'
+            };
+            await editElements(deletePayload).unwrap();
+            
+            // Then add the new value
+            const addPayload = {
+                [elementName]: newValue,
+                type: 'update'
+            };
+            await editElements(addPayload).unwrap();
+            
+            await refetchElements();
+            setSuccess(`${elementName} value updated successfully!`);
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            const message = err?.data?.message || err?.error || `Failed to update ${elementName} value. Please try again.`;
+            setError(message);
+            setTimeout(() => setError(''), 5000);
+        }
+    };
+
+    // Define the elements we want to manage
+    const manageableElements = [
+        { key: 'relationships', name: 'Relationships' },
+        { key: 'experties', name: 'Expertise' },
+        { key: 'characteristics', name: 'Characteristics' },
+        { key: 'whatYouWantToHear', name: 'What You Want To Hear' }
+    ];
+
     return (
         <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-800 flex items-center">
                         <Settings className="mr-3" />
                         Settings
                     </h1>
-                    <p className="text-gray-600 mt-2">Manage your application settings and preferences</p>
+                    <p className="text-gray-600 mt-2">Manage application elements and AI contacts</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Account Settings Card */}
-                    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Account Settings</h2>
-                        <div className="space-y-4">
-                            <div className="p-4 bg-gray-50 rounded-lg">
-                                <h3 className="font-medium text-gray-700">Profile Information</h3>
-                                <p className="text-sm text-gray-600 mt-1">Update your personal information</p>
-                            </div>
-                            <div className="p-4 bg-gray-50 rounded-lg">
-                                <h3 className="font-medium text-gray-700">Security</h3>
-                                <p className="text-sm text-gray-600 mt-1">Change password and security settings</p>
-                            </div>
-                            <div className="p-4 bg-gray-50 rounded-lg">
-                                <h3 className="font-medium text-gray-700">Notifications</h3>
-                                <p className="text-sm text-gray-600 mt-1">Manage your notification preferences</p>
-                            </div>
-                        </div>
+                {/* Success/Error Messages */}
+                {success && (
+                    <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-lg border border-green-200">
+                        {success}
+                    </div>
+                )}
+                {error && (
+                    <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
+                        {error}
+                    </div>
+                )}
+
+                {/* Element Management Section */}
+                <div className="mb-8">
+                    <h2 className="text-2xl font-semibold text-gray-800 mb-6">Element Management</h2>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {manageableElements.map((element) => (
+                            <ElementManagementSection
+                                key={element.key}
+                                elementName={element.name}
+                                elementValues={elementsList[element.key] || []}
+                                onAddValue={(value) => handleAddElementValue(element.key, value)}
+                                onDeleteValue={(value) => handleDeleteElementValue(element.key, value)}
+                                onEditValue={(oldValue, newValue) => handleEditElementValue(element.key, oldValue, newValue)}
+                                isLoading={isElementsLoading || isEditingElements}
+                            />
+                        ))}
+                    </div>
+                </div>
+
+                {/* AI Contacts Section */}
+                <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-semibold text-gray-800">AI Contacts</h2>
+                        <button
+                            onClick={() => setShowAiContactForm(true)}
+                            className="flex items-center px-5 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-md"
+                        >
+                            <Plus size={18} className="mr-2" />
+                            Create AI Contact
+                        </button>
                     </div>
 
-                    {/* Application Settings Card */}
-                    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Application Settings</h2>
-                        <div className="space-y-4">
-                            <div className="p-4 bg-gray-50 rounded-lg">
-                                <h3 className="font-medium text-gray-700">Display</h3>
-                                <p className="text-sm text-gray-600 mt-1">Theme and appearance settings</p>
-                            </div>
-                            <div className="p-4 bg-gray-50 rounded-lg">
-                                <h3 className="font-medium text-gray-700">Language</h3>
-                                <p className="text-sm text-gray-600 mt-1">App language and region settings</p>
-                            </div>
-                            <div className="p-4 bg-gray-50 rounded-lg">
-                                <h3 className="font-medium text-gray-700">Privacy</h3>
-                                <p className="text-sm text-gray-600 mt-1">Data and privacy controls</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* AI Contacts Section */}
-                    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 md:col-span-2">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-semibold text-gray-800">AI Contacts</h2>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        {[
+                            {label: 'Experts', value: 'new_expert'},
+                            {label: 'Companion', value: 'new_companion'},
+                            {label: 'Assistant', value: 'new_assistant'},
+                            {label: 'Character', value: 'new_characters'},
+                        ].map((f) => (
                             <button
-                                onClick={() => setShowAiContactForm(true)}
-                                className="flex items-center px-4 py-2 bg-[#1976d2] text-white rounded-lg hover:bg-[#1565c0] transition-colors"
-                            >
-                                <Plus size={18} className="mr-2" />
-                                Create AI Contact
-                            </button>
-                        </div>
+                                key={f.value}
+                                onClick={() => setFilterType(f.value)}
+                                className={`px-3 py-1.5 rounded-md border ${filterType===f.value? 'bg-[#1976d2] text-white border-[#1976d2]':'bg-white text-gray-700 border-gray-300'} hover:shadow-sm`}
+                            >{f.label}</button>
+                        ))}
+                    </div>
 
-                        <div className="flex flex-wrap gap-2 mb-4">
-                            {[
-                                {label: 'Experts', value: 'new_expert'},
-                                {label: 'Companion', value: 'new_companion'},
-                                {label: 'Assistant', value: 'new_assistant'},
-                                {label: 'Character', value: 'new_characters'},
-                            ].map((f) => (
-                                <button
-                                    key={f.value}
-                                    onClick={() => setFilterType(f.value)}
-                                    className={`px-3 py-1.5 rounded-md border ${filterType===f.value? 'bg-[#1976d2] text-white border-[#1976d2]':'bg-white text-gray-700 border-gray-300'} hover:shadow-sm`}
-                                >{f.label}</button>
-                            ))}
-                        </div>
-
-                        {aiContacts.length ? (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full text-left text-sm">
-                                    <thead className="bg-gray-50 text-gray-700">
-                                        <tr>
-                                            <th className="px-4 py-2">Name</th>
-                                            <th className="px-4 py-2">Expertise</th>
-                                            <th className="px-4 py-2">Age</th>
-                                            <th className="px-4 py-2">Relationship</th>
-                                            <th className="px-4 py-2">Gender</th>
-                                            <th className="px-4 py-2">Actions</th>
+                    {aiContacts.length ? (
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full text-left text-sm">
+                                <thead className="bg-gray-50 text-gray-700">
+                                    <tr>
+                                        <th className="px-4 py-2">Name</th>
+                                        <th className="px-4 py-2">Expertise</th>
+                                        <th className="px-4 py-2">Age</th>
+                                        <th className="px-4 py-2">Relationship</th>
+                                        <th className="px-4 py-2">Gender</th>
+                                        <th className="px-4 py-2">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {aiContacts.map((c) => (
+                                        <tr key={c._id} className="border-b">
+                                            <td className="px-4 py-2">{c.name}</td>
+                                            <td className="px-4 py-2">{c.expertise}</td>
+                                            <td className="px-4 py-2">{c.age}</td>
+                                            <td className="px-4 py-2">{c.relationship}</td>
+                                            <td className="px-4 py-2">{typeof c.gender==='string'? c.gender.charAt(0).toUpperCase()+c.gender.slice(1).toLowerCase():''}</td>
+                                            <td className="px-4 py-2 flex gap-2">
+                                                <button
+                                                    onClick={async () => { try { await deleteAdminAiContact(c._id).unwrap(); refetch(); } catch(e){} }}
+                                                    className="px-2 py-1 text-xs rounded bg-red-600 text-white"
+                                                >Delete</button>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {aiContacts.map((c) => (
-                                            <tr key={c._id} className="border-b">
-                                                <td className="px-4 py-2">{c.name}</td>
-                                                <td className="px-4 py-2">{c.expertise}</td>
-                                                <td className="px-4 py-2">{c.age}</td>
-                                                <td className="px-4 py-2">{c.relationship}</td>
-                                                <td className="px-4 py-2">{typeof c.gender==='string'? c.gender.charAt(0).toUpperCase()+c.gender.slice(1).toLowerCase():''}</td>
-                                                <td className="px-4 py-2 flex gap-2">
-                                                    <button
-                                                        onClick={() => { setSelectedContact(c); setOpenEdit(true); }}
-                                                        className="px-2 py-1 text-xs rounded bg-blue-600 text-white"
-                                                    >Edit</button>
-                                                    <button
-                                                        onClick={async () => { try { await deleteAdminAiContact(c._id).unwrap(); refetch(); } catch(e){} }}
-                                                        className="px-2 py-1 text-xs rounded bg-red-600 text-white"
-                                                    >Delete</button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="bg-gray-50 rounded-lg p-8 text-center border-2 border-dashed border-gray-300">
-                                <User className="mx-auto text-gray-400 mb-3" size={40} />
-                                <h3 className="font-medium text-gray-700 mb-1">No AI Contacts</h3>
-                                <p className="text-gray-600 text-sm mb-4">Choose a type or create one</p>
-                            </div>
-                        )}
-
-                        <EditAiContactModal
-                            open={openEdit}
-                            onClose={() => { setOpenEdit(false); setSelectedContact(null); }}
-                            contact={selectedContact}
-                            onUpdate={() => { refetch(); setOpenEdit(false); setSelectedContact(null); }}
-                        />
-
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
                         <div className="bg-gray-50 rounded-lg p-8 text-center border-2 border-dashed border-gray-300">
                             <User className="mx-auto text-gray-400 mb-3" size={40} />
-                            <h3 className="font-medium text-gray-700 mb-1">No AI Contacts Yet</h3>
-                            <p className="text-gray-600 text-sm mb-4">Create your first AI contact to get started</p>
-                            <button
-                                onClick={() => setShowAiContactForm(true)}
-                                className="inline-flex items-center px-4 py-2 bg-[#1976d2] text-white rounded-lg hover:bg-[#1565c0] transition-colors"
-                            >
-                                <Plus size={16} className="mr-2" />
-                                Create AI Contact
-                            </button>
+                            <h3 className="font-medium text-gray-700 mb-1">No AI Contacts</h3>
+                            <p className="text-gray-600 text-sm mb-4">Choose a type or create one</p>
                         </div>
-                    </div>
+                    )}
+
+                    <EditAiContactModal
+                        open={openEdit}
+                        onClose={() => { setOpenEdit(false); setSelectedContact(null); }}
+                        contact={selectedContact}
+                        onUpdate={() => { refetch(); setOpenEdit(false); setSelectedContact(null); }}
+                    />
                 </div>
             </div>
 

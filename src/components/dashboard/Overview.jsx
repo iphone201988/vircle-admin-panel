@@ -282,7 +282,7 @@ console.log("Is loading:", isLoading);
                   }`}
                 >
                   {data.data.userPercentageFromLastMonth > 0 ? "+" : ""}
-                  {data.data.userPercentageFromLastMonth}% from last month
+                  {data.data.userPercentageFromLastMonth.toFixed(2)}% from last month
                 </p>
               )}
             </div>
@@ -302,7 +302,7 @@ console.log("Is loading:", isLoading);
                   }`}
                 >
                   {data.data.aiPercentageFromLastMonth > 0 ? "+" : ""}
-                  {data.data.aiPercentageFromLastMonth}% from last month
+                  {data.data.aiPercentageFromLastMonth.toFixed(2)}% from last month
                 </p>
               )}
             </div>

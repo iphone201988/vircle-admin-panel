@@ -102,11 +102,21 @@ export const adminApi = createApi({
     // Delete admin AI contact
     deleteAdminAiContact: builder.mutation({
       query: (id) => ({
-        url: 'https://52.200.106.168:8000/api/v1/admin/DeleteAdminAiContac',
+        url: '/deleteAdminAiContact',
         method: 'DELETE',
         body: { id },
       }),
       invalidatesTags: ['AiContacts'],
+    }),
+
+    // Edit elements (add/update/delete values)
+    editElements: builder.mutation({
+      query: (payload) => ({
+        url: '/editElements',
+        method: 'PUT',
+        body: payload,
+      }),
+      invalidatesTags: ['Elements'],
     }),
 
 
@@ -127,6 +137,7 @@ export const {
   useGetAdminAiContactsQuery,
   useUpdateAdminAiContactMutation,
   useDeleteAdminAiContactMutation,
+  useEditElementsMutation,
 } = adminApi;
 
 
