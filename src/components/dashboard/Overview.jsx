@@ -191,6 +191,7 @@ import MonthlyRevenueChart from "./MonthlyRevenueChart";
 import Loader from "../Loader";
 import { useGetAnalyticsInsightsQuery } from "../../rtk/api/adminApi";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, TimeScale, Title, Tooltip, Legend,} from "chart.js";
+import { Typography } from "@mui/material";
 
 ChartJS.register(
   CategoryScale,
@@ -206,24 +207,19 @@ ChartJS.register(
 
 
 const Overview = () => {
+  const { data, error, isLoading } = useGetAnalyticsInsightsQuery();
 
-  const { data, error,  isLoading } = useGetAnalyticsInsightsQuery();
-
-  console.log("Analytics Data:", data?.data);
-console.log("Is loading:", isLoading);
-
-  const month = data?.data?.userGrowth?.map((item) => item.month);
-  const userDataSet = data?.data?.userGrowth?.map((item) => item.user);
-  const aiDataSet = data?.data?.userGrowth?.map((item) => item.aiContact);
-
-
+  const userGrowth = data?.data?.userGrowth ?? [];
+  const month = userGrowth.map((item) => item.month);
+  const userDataSet = userGrowth.map((item) => item.user);
+  const aiDataSet = userGrowth.map((item) => item.aiContact);
 
   const lineData = {
-    labels: month,
+    labels: month.length ? month : ["No data"],
     datasets: [
       {
         label: "User Growth",
-        data: userDataSet,
+        data: userDataSet.length ? userDataSet : [0],
         borderColor: "#3b82f6",
         backgroundColor: "rgba(59, 130, 246, 0.2)",
         tension: 0.4,
@@ -235,18 +231,24 @@ console.log("Is loading:", isLoading);
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: "top",
+      legend: { position: "top" },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y}`,
+        },
       },
+    },
+    scales: {
+      y: { beginAtZero: true, ticks: { precision: 0 } },
     },
   };
 
   const aiGrowthData = {
-    labels: month,
+    labels: month.length ? month : ["No data"],
     datasets: [
       {
         label: "AI Contact Growth",
-        data: aiDataSet,
+        data: aiDataSet.length ? aiDataSet : [0],
         borderColor: "#10b981",
         backgroundColor: "rgba(16, 185, 129, 0.2)",
         tension: 0.4,
@@ -273,18 +275,24 @@ console.log("Is loading:", isLoading);
               <p className="text-xl sm:text-2xl font-bold">
                 {data?.data?.totalUsers}
               </p>
-              {data?.data?.userPercentageFromLastMonth !== undefined && (
-                <p
-                  className={`text-sm ${
-                    data.data.userPercentageFromLastMonth < 0
-                      ? "text-red-500"
-                      : "text-green-600"
-                  }`}
-                >
-                  {data.data.userPercentageFromLastMonth > 0 ? "+" : ""}
-                  {data.data.userPercentageFromLastMonth.toFixed(2)}% from last month
-                </p>
-              )}
+              {data?.data?.userPercentageFromLastMonth !== undefined &&
+                data?.data?.userPercentageFromLastMonth !== null && (
+                  <p
+                    className={`text-sm ${
+                      data.data.userPercentageFromLastMonth < 0
+                        ? "text-red-500"
+                        : "text-green-600"
+                    }`}
+                  >
+                    {(() => {
+                      const pct = Number(data.data.userPercentageFromLastMonth);
+                      if (pct > 100) return "100%+ from last month";
+                      if (pct > 0) return `+${pct.toFixed(1)}% from last month`;
+                      if (pct < 0) return `${pct.toFixed(1)}% from last month`;
+                      return "No change from last month";
+                    })()}
+                  </p>
+                )}
             </div>
             <div className="bg-white p-4 rounded shadow">
               <h2 className="text-base sm:text-lg font-medium">
@@ -293,18 +301,24 @@ console.log("Is loading:", isLoading);
               <p className="text-xl sm:text-2xl font-bold">
                 {data?.data?.totalAiContacts}
               </p>
-              {data?.data?.aiPercentageFromLastMonth !== undefined && (
-                <p
-                  className={`text-sm ${
-                    data.data.aiPercentageFromLastMonth < 0
-                      ? "text-red-500"
-                      : "text-green-600"
-                  }`}
-                >
-                  {data.data.aiPercentageFromLastMonth > 0 ? "+" : ""}
-                  {data.data.aiPercentageFromLastMonth.toFixed(2)}% from last month
-                </p>
-              )}
+              {data?.data?.aiPercentageFromLastMonth !== undefined &&
+                data?.data?.aiPercentageFromLastMonth !== null && (
+                  <p
+                    className={`text-sm ${
+                      data.data.aiPercentageFromLastMonth < 0
+                        ? "text-red-500"
+                        : "text-green-600"
+                    }`}
+                  >
+                    {(() => {
+                      const pct = Number(data.data.aiPercentageFromLastMonth);
+                      if (pct > 100) return "100%+ from last month";
+                      if (pct > 0) return `+${pct.toFixed(1)}% from last month`;
+                      if (pct < 0) return `${pct.toFixed(1)}% from last month`;
+                      return "No change from last month";
+                    })()}
+                  </p>
+                )}
             </div>
             <div className="bg-white p-4 rounded shadow">
               <h2 className="text-base sm:text-lg font-medium">Revenue</h2>

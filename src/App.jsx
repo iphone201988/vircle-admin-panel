@@ -4,6 +4,8 @@ import Dashboard from "./pages/Dashboard";
 import {ProtectedRoute} from "./components/protectedRoute";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import DeleteAccount from "./pages/DeleteAccount";
+import TermsOfService from "./pages/TermsOfService";
+import AiUseDisclaimer from "./pages/AiUseDisclaimer";
 function App() {
   return (
     <Router>
@@ -18,6 +20,18 @@ function App() {
           path="/privacyPolicy"
           element={
               <PrivacyPolicy />
+          }
+        />
+         <Route
+          path="/termsOfService"
+          element={
+              <TermsOfService />
+          }
+        />
+         <Route
+          path="/aiUseDisclaimer"
+          element={
+              <AiUseDisclaimer />
           }
         />
         <Route
