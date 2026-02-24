@@ -1,11 +1,31 @@
 import React from "react";
 import ReactApexChart from "react-apexcharts";
 
-const MonthlyRevenueChart = () => {
+const MonthlyGrowthChart = ({ data }) => {
+  // Full 12 months order
+  const allMonths = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  // Map API data to object for quick lookup
+  const growthMap = {};
+  data?.userGrowth?.forEach(item => {
+    growthMap[item.month] = item;
+  });
+
+  // Prepare series data for all 12 months
+  const userData = allMonths.map(month => growthMap[month]?.user || 0);
+  const aiContactData = allMonths.map(month => growthMap[month]?.aiContact || 0);
+
   const series = [
     {
-      name: "Revenue",
-      data: [50, 70, 20, 90, 60, 110], // Example earnings per month
+      name: "Users",
+      data: userData,
+    },
+    {
+      name: "AI Contacts",
+      data: aiContactData,
     },
   ];
 
@@ -13,33 +33,42 @@ const MonthlyRevenueChart = () => {
     chart: {
       type: "bar",
       height: 350,
+      toolbar: { show: false },
     },
     title: {
-      text: "Monthly Revenue",
+      text: "Monthly Growth (Users & AI Contacts)",
       align: "left",
     },
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        columnWidth: "40%",
+        borderRadius: 6,
+      },
+    },
     xaxis: {
-      categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+      categories: allMonths,
     },
     yaxis: {
       title: {
-        text: "Revenue ($)",
+        text: "Count",
       },
+    },
+    colors: ["#3b82f6", "#10b981"],
+    legend: {
+      position: "top",
     },
     tooltip: {
-      y: {
-        formatter: (val) => `$${val}`,
-      },
+      shared: true,
+      intersect: false,
     },
-    colors: ["#3b82f6"],
   };
 
   return (
     <div className="bg-white p-6 rounded shadow mt-6">
-      <h2 className="text-lg font-medium mb-4">Monthly Revenue</h2>
       <ReactApexChart options={options} series={series} type="bar" height={350} />
     </div>
   );
 };
 
-export default MonthlyRevenueChart;
+export default MonthlyGrowthChart;

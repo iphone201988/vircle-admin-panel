@@ -194,7 +194,7 @@ useEffect(()=>{
               color="primary"
               sx={{ borderBottom: "2px solid #1976d2", pb: 1 }}
             >
-              Contacts
+              Feedbacks
             </Typography>
           </Box>
 

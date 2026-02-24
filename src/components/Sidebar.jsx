@@ -34,7 +34,7 @@ const Sidebar = ({ onClose }) => {
       icon: <Brain className="mr-2 h-4 w-4" />,
     },
     {
-      title: "Contacts",
+      title: "Feedbacks",
       to: "/dashboard/Contact",
       icon: <SmartphoneNfc className="mr-2 h-4 w-4" />,
     },
@@ -56,11 +56,12 @@ const Sidebar = ({ onClose }) => {
   };
 
   return (
-    <div className="flex h-full flex-col justify-between py-4 bg-gray-900 text-white">
+    <div className="fixed top-0 left-0 h-screen w-64 flex flex-col justify-between py-4 bg-gray-900 text-white">
       <div className="px-4">
         <h2 className="mb-6 text-xl font-semibold tracking-tight">
           Vircle
         </h2>
+  
         <div className="space-y-2">
           {navItems.map((item) => (
             <Link
@@ -79,10 +80,10 @@ const Sidebar = ({ onClose }) => {
           ))}
         </div>
       </div>
-
+  
       <div className="px-4">
         <Link
-         onClick={() => handleLogout()}
+          onClick={handleLogout}
           className="flex items-center w-full px-4 py-2 rounded-md border border-white hover:bg-red-600 transition"
         >
           <LogOut className="mr-2 h-4 w-4" />

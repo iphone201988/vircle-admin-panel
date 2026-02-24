@@ -212,15 +212,10 @@
 //   );
 // }
 
-
-
-
-
 import { useState, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import DataTable from "../../components/DataTable";
 import GroupIcon from "@mui/icons-material/Group";
-// import { getUserList, deleteUser, activateOrDeactivate } from "../../utils";
 import Tooltip from "@mui/material/Tooltip";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
@@ -242,63 +237,100 @@ export default function UserList() {
   const { data, error, isLoading } = useGetUserListQuery();
   const [deleteUser] = useDeleteUserMutation();
   const [toggleUserStatus] = useActivateOrDeactivateMutation();
+
   const [rows, setRows] = useState([]);
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
     const users = data?.data?.users || [];
-    console.log('users',users);
-
     const s3Url = import.meta.env.VITE_S3_URL;
-    const rows = users.map((user) => ({
-      id: user._id,
-      name: user.name || "--",
-      email: user.email || "--",
-      age: user.age || "--",
-      gender:
-        typeof user.gender === "string"
-          ? user.gender.charAt(0).toUpperCase() +
-            user.gender.slice(1).toLowerCase()
-          : "--",
-      aiAccountCount: user.aiAccountCount,
-      personal_details: user.personal_details || "--",
-      isActive: user.isActive,
-      avatar: s3Url
-        ? s3Url + user.avatar
-        : import.meta.env.VITE_SERVERIMG_URL + "/" + user.avatar,
-    }));
+    const serverUrl = import.meta.env.VITE_SERVERIMG_URL;
 
+    const mappedRows = users.map((user) => {
+      const devices = user.devices || [];
 
-    setRows(rows);
+      const iosCount = devices.filter(
+        (d) => Number(d.deviceType) === 1
+      ).length;
+
+      const androidCount = devices.filter(
+        (d) => Number(d.deviceType) === 2
+      ).length;
+
+      // ✅ TOKEN USED LOGIC
+      const tokensUsed =
+        user.subscription?.usage?.tokensUsed ??
+        user.monthlyTokenUsage ??
+        0;
+
+      // ✅ START DATE SAFE PARSE
+      const subscriptionStartDate =
+        user.subscription &&
+        typeof user.subscription === "object" &&
+        user.subscription.startDate
+          ? new Date(user.subscription.startDate).toLocaleDateString()
+          : "--";
+
+      // ✅ AVATAR SAFE
+      let avatar = "/default-avatar.png";
+
+      if (user.avatar) {
+        if (user.avatar.startsWith("http")) {
+          avatar = user.avatar;
+        } else if (s3Url) {
+          avatar = s3Url + user.avatar;
+        } else if (serverUrl) {
+          avatar = `${serverUrl}/${user.avatar}`;
+        }
+      }
+
+      return {
+        id: user._id,
+        name: user.name || "--",
+        email: user.email || "--",
+        age: user.age ?? "--",
+
+        gender:
+          typeof user.gender === "string"
+            ? user.gender.charAt(0).toUpperCase() +
+              user.gender.slice(1).toLowerCase()
+            : "--",
+
+        aiAccountCount: user.aiAccountCount ?? 0,
+        tokensUsed,
+        subscriptionStartDate,
+        personal_details: user.personal_details || "--",
+        isActive: user.isActive ?? false,
+
+        devices: {
+          ios: iosCount,
+          android: androidCount,
+        },
+
+        avatar,
+      };
+    });
+
+    setRows(mappedRows);
     setUsers(users);
   }, [data]);
 
-  // const handleDeleteClick = async (params) => {
-  //   isLoading(true);
-  //   const response = await deleteUser(params.id);
-  //   const users = await getUserList();
-  //   setUsers(users?.data?.users);
-  //   console.log(response);
-  //   isLoading(false);
-  // };
-
   const handleDeleteClick = async (params) => {
-  try {
-    await deleteUser(params.id).unwrap();
-    toast.success("User deleted successfully");
-  } catch (error) {
-    toast.error("Failed to delete user");
-    console.error("Delete user error:", error);
-  }
-};
-
+    try {
+      await deleteUser(params.id).unwrap();
+      toast.success("User deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete user");
+      console.error(error);
+    }
+  };
 
   const handleToggleStatus = async (params) => {
     try {
       const res = await toggleUserStatus(params.id).unwrap();
-      toast.success(res?.message || "Status updated successfully");
-    } catch (err) {
-      toast.error("Failed to update user status");
+      toast.success(res?.message || "Status updated");
+    } catch {
+      toast.error("Failed to update status");
     }
   };
 
@@ -310,67 +342,76 @@ export default function UserList() {
       minWidth: 60,
       sortable: false,
       renderCell: (params) => (
-        <Avatar
-          alt={params.row.name}
-          src={params.value || "/default-avatar.png"} // fallback avatar
-          sx={{ width: 32, height: 32 }}
-        />
+        <Avatar src={params.value} alt={params.row.name} sx={{ width: 32, height: 32 }} />
       ),
     },
-    { field: "name", headerName: "First name", flex: 1, minWidth: 120 },
-    { field: "email", headerName: "Email", flex: 1, minWidth: 120 },
+
+    { field: "name", headerName: "Name", flex: 1, minWidth: 140 },
+    { field: "email", headerName: "Email", flex: 1.2, minWidth: 160 },
+
+    { field: "age", headerName: "Age", flex: 0.6, minWidth: 80 },
+
+    { field: "gender", headerName: "Gender", flex: 0.8, minWidth: 100 },
+
     {
-      field: "age",
-      headerName: "Age",
-      type: "number",
-      flex: 0.6,
-      minWidth: 80,
-      align: "left",
-      headerAlign: "left",
+      field: "aiAccountCount",
+      headerName: "AI Accounts",
+      flex: 0.8,
+      minWidth: 120,
     },
+
+    // ⭐ TOKENS USED
     {
-      field: "gender",
-      headerName: "Gender",
+      field: "tokensUsed",
+      headerName: "MonthlyTokens Used",
+      flex: 0.9,
+      minWidth: 130,
+      renderCell: (params) => (
+        <Chip label={params.value} size="small" color="secondary" variant="outlined" />
+      ),
+    },
+
+    // ⭐ SUB START
+    {
+      field: "subscriptionStartDate",
+      headerName: "Subscription Start",
       flex: 1,
       minWidth: 160,
     },
-    {
-      field: "aiAccountCount",
-      headerName: "AI Account Count",
-      type: "number",
-      flex: 0.6,
-      minWidth: 80,
-      align: "left",
-      headerAlign: "left",
-    },
+
+    // ⭐ PERSONAL DETAILS
     {
       field: "personal_details",
       headerName: "Personal Details",
-      flex: 1,
-      minWidth: 160,
-      sortable: false,
+      flex: 1.2,
+      minWidth: 180,
       renderCell: (params) => (
         <Tooltip title={params.value || "--"}>
-          <Typography
-            variant="body2"
-            noWrap
-            sx={{
-              maxWidth: "100%",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {params.value || "--"}
-          </Typography>
+          <Typography noWrap>{params.value || "--"}</Typography>
         </Tooltip>
       ),
     },
+
+    // ⭐ DEVICES
+    {
+      field: "devices",
+      headerName: "Devices",
+      flex: 1,
+      minWidth: 140,
+      renderCell: (params) => (
+        <>
+          <Chip label={`IOS ${params.row.devices?.ios ?? 0}`} size="small" variant="outlined" />
+          <Chip label={`Android ${params.row.devices?.android ?? 0}`} size="small" variant="outlined" />
+        </>
+      ),
+    },
+
+    // ⭐ STATUS
     {
       field: "isActive",
       headerName: "Status",
       flex: 0.8,
-      minWidth: 100,
+      minWidth: 110,
       renderCell: (params) => (
         <Chip
           label={params.value ? "Active" : "Inactive"}
@@ -380,24 +421,20 @@ export default function UserList() {
         />
       ),
     },
+
+    // ⭐ ACTIONS
     {
-      field: "_id",
+      field: "actions",
       headerName: "Actions",
       sortable: false,
-      flex: 0.8,
-      minWidth: 100,
+      flex: 1,
+      minWidth: 130,
       renderCell: (params) => (
         <Stack direction="row" spacing={1}>
-          <Tooltip
-            title={params.row.isActive ? "Deactivate User" : "Activate User"}
-          >
-            <IconButton
-              onClick={() => handleToggleStatus(params.row)}
-              size="small"
-              color={params.row.isActive ? "success" : "default"}
-            >
+          <Tooltip title={params.row.isActive ? "Deactivate" : "Activate"}>
+            <IconButton onClick={() => handleToggleStatus(params.row)} size="small">
               {params.row.isActive ? (
-                <CheckCircleIcon fontSize="small" />
+                <CheckCircleIcon fontSize="small" color="success" />
               ) : (
                 <CancelIcon fontSize="small" />
               )}
@@ -405,12 +442,8 @@ export default function UserList() {
           </Tooltip>
 
           <Tooltip title="Delete User">
-            <IconButton
-              onClick={() => handleDeleteClick(params.row)}
-              size="small"
-              color="error"
-            >
-              <DeleteIcon fontSize="small" />
+            <IconButton onClick={() => handleDeleteClick(params.row)} size="small">
+              <DeleteIcon fontSize="small" color="error" />
             </IconButton>
           </Tooltip>
         </Stack>
@@ -424,23 +457,18 @@ export default function UserList() {
         <Loader />
       ) : error ? (
         <Typography color="error" p={4}>
-          Failed to Load Users.
+          Failed to load users
         </Typography>
       ) : (
         <Box p={4}>
           <Box display="flex" alignItems="center" mb={2}>
             <GroupIcon color="primary" sx={{ mr: 1 }} />
-            <Typography
-              variant="h5"
-              fontWeight="bold"
-              color="primary"
-              sx={{ borderBottom: "2px solid #1976d2", pb: 1 }}
-            >
+            <Typography variant="h5" fontWeight="bold" color="primary">
               Users List
             </Typography>
           </Box>
 
-          <DataTable users={users} columns={columns} rows={rows} />
+          <DataTable users={users} rows={rows} columns={columns} />
         </Box>
       )}
     </>

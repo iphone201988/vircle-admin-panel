@@ -36,7 +36,7 @@
 // const Overview = () => {
 //   const [data, setData] = React.useState(null);
 //   const [loading, setLoading] = React.useState(false);
-  
+
 //   useEffect(() => {
 //     (async () => {
 //       setLoading(true);
@@ -174,23 +174,22 @@
 
 // export default Overview;
 
-
-
-
-
-
-
-
-
-
-
-
 import React from "react";
 import { Line } from "react-chartjs-2";
 import MonthlyRevenueChart from "./MonthlyRevenueChart";
 import Loader from "../Loader";
 import { useGetAnalyticsInsightsQuery } from "../../rtk/api/adminApi";
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, TimeScale, Title, Tooltip, Legend,} from "chart.js";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  TimeScale,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 import { Typography } from "@mui/material";
 
 ChartJS.register(
@@ -203,8 +202,6 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-
-
 
 const Overview = () => {
   const { data, error, isLoading } = useGetAnalyticsInsightsQuery();
@@ -262,10 +259,12 @@ const Overview = () => {
         Dashboard Overview
       </h1>
 
-        {isLoading ? (
+      {isLoading ? (
         <Loader />
       ) : error ? (
-        <Typography color="error" p={4}>Failed to Load Dashboard.</Typography>
+        <Typography color="error" p={4}>
+          Failed to Load Dashboard.
+        </Typography>
       ) : (
         <>
           {/* Summary Cards */}
@@ -322,7 +321,18 @@ const Overview = () => {
             </div>
             <div className="bg-white p-4 rounded shadow">
               <h2 className="text-base sm:text-lg font-medium">Revenue</h2>
-              <p className="text-xl sm:text-2xl font-bold">$5,000</p>
+              <p className="text-xl sm:text-2xl font-bold">
+                {(() => {
+                  const revenue = data?.data?.totalRevenue;
+
+                  if (revenue === undefined || revenue === null) return "$0";
+
+                  return `$${Number(revenue).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}`;
+                })()}
+              </p>
             </div>
           </div>
 
@@ -357,8 +367,3 @@ const Overview = () => {
 };
 
 export default Overview;
-
-
-
-
-
