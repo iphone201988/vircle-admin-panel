@@ -15,7 +15,7 @@ import {
   useGetElementsQuery,
   useGetAdminAiContactsQuery,
   useDeleteAdminAiContactMutation,
-  useUpdateAdminAiContactMutation,
+  // useUpdateAdminAiContactMutation,
   useEditElementsMutation,
 } from "../../rtk/api/adminApi";
 import EditAiContactModal from "../../components/EditAiContactModal.jsx";
@@ -1039,9 +1039,6 @@ const ElementManagementSection = ({
   );
 };
 
-const [updateAdminAiContact, { isLoading: isUpdating }] =
-  useUpdateAdminAiContactMutation();
-
 const SettingsPage = () => {
   const [showAiContactForm, setShowAiContactForm] = useState(false);
   const [error, setError] = useState("");
@@ -1055,6 +1052,8 @@ const SettingsPage = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [editElements, { isLoading: isEditingElements }] =
     useEditElementsMutation();
+  // const [updateAdminAiContact, { isLoading: isUpdating }] =
+  //   useUpdateAdminAiContactMutation();
   const {
     data: elementsData,
     isLoading: isElementsLoading,
@@ -1166,7 +1165,7 @@ const SettingsPage = () => {
   const handleUpdateContact = async (formData, id) => {
     try {
       const form = new FormData();
-  
+
       form.append("name", formData.name);
       form.append("age", formData.age);
       form.append("gender", formData.gender);
@@ -1175,19 +1174,19 @@ const SettingsPage = () => {
       form.append("canTextEvery", formData.canTextEvery);
       form.append("title", formData.title);
       form.append("type", formData.type);
-  
+
       if (formData.aiAvatar instanceof File) {
         form.append("aiAvatar", formData.aiAvatar);
       }
-  
+
       if (Array.isArray(formData.characterstics)) {
         formData.characterstics.forEach((c) =>
           form.append("characterstics[]", c)
         );
       }
-  
+
       await updateAdminAiContact({ id, body: form }).unwrap();
-  
+
       setSuccess("AI Contact updated successfully!");
       refetch();
     } catch (err) {
@@ -1364,28 +1363,28 @@ const SettingsPage = () => {
                           : ""}
                       </td>
                       <td className="px-4 py-2 flex gap-2">
-  <button
-    onClick={() => {
-      setSelectedContact(c);
-      setOpenEdit(true);
-    }}
-    className="px-2 py-1 text-xs rounded bg-blue-600 text-white flex items-center gap-1"
-  >
-    <Edit size={14} /> Edit
-  </button>
+                        <button
+                          onClick={() => {
+                            setSelectedContact(c);
+                            setOpenEdit(true);
+                          }}
+                          className="px-2 py-1 text-xs rounded bg-blue-600 text-white flex items-center gap-1"
+                        >
+                          <Edit size={14} /> Edit
+                        </button>
 
-  <button
-    onClick={async () => {
-      try {
-        await deleteAdminAiContact(c._id).unwrap();
-        refetch();
-      } catch (e) {}
-    }}
-    className="px-2 py-1 text-xs rounded bg-red-600 text-white"
-  >
-    Delete
-  </button>
-</td>
+                        <button
+                          onClick={async () => {
+                            try {
+                              await deleteAdminAiContact(c._id).unwrap();
+                              refetch();
+                            } catch (e) {}
+                          }}
+                          className="px-2 py-1 text-xs rounded bg-red-600 text-white"
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1401,19 +1400,19 @@ const SettingsPage = () => {
             </div>
           )}
 
-<EditAiContactModal
-  open={openEdit}
-  onClose={() => {
-    setOpenEdit(false);
-    setSelectedContact(null);
-  }}
-  contact={selectedContact}
-  onUpdate={(data) => {
-    handleUpdateContact(data, selectedContact._id);
-    setOpenEdit(false);
-    setSelectedContact(null);
-  }}
-/>
+          <EditAiContactModal
+            open={openEdit}
+            onClose={() => {
+              setOpenEdit(false);
+              setSelectedContact(null);
+            }}
+            contact={selectedContact}
+            onUpdate={(data) => {
+              handleUpdateContact(data, selectedContact._id);
+              setOpenEdit(false);
+              setSelectedContact(null);
+            }}
+          />
         </div>
       </div>
 

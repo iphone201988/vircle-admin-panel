@@ -11,7 +11,7 @@ const paginationModel = { page: 0, pageSize: 10 };
 export default function DataTable({ users , columns, rows}) {
    
 
-  console.log('rows======================',rows);
+  // console.log('rows======================',rows);
 
 
   return (

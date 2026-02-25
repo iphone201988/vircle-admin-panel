@@ -571,11 +571,12 @@ export default function AiContactList() {
   const handleUpdate = async (updatedData) => {
     try {
       await updateAiContact({
-        id: selectedContact.id,
+        id: selectedContact.id || selectedContact._id, // safe fallback
         aiContact: updatedData,
       }).unwrap();
+  
       toast.success("AI contact updated successfully");
-      refetch(); 
+      refetch();
       handleModalClose();
     } catch (error) {
       toast.error("Failed to update AI contact");

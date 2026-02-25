@@ -79,7 +79,7 @@ export const adminApi = createApi({
 
     // Fetch dropdown options for the Create AI Contact form (absolute URL)
     getElements: builder.query({
-      query: () => 'https://52.200.106.168:8000/api/v1/user/getElements',
+      query: () => `http://localhost:2000/api/v1/user/getElements`,
       providesTags: [],
     }),
 
@@ -90,14 +90,14 @@ export const adminApi = createApi({
     }),
 
     // Update admin AI contact
-    updateAdminAiContact: builder.mutation({
-      query: (payload) => ({
-        url: 'https://52.200.106.168:8000/api/v1/admin/updateAdminAiContact',
-        method: 'PUT',
-        body: payload,
-      }),
-      invalidatesTags: ['AiContacts'],
-    }),
+    // updateAdminAiContact: builder.mutation({
+    //   query: (payload) => ({
+    //     url: 'https://52.200.106.168:8000/api/v1/admin/updateAdminAiContact',
+    //     method: 'PUT',
+    //     body: payload,
+    //   }),
+    //   invalidatesTags: ['AiContacts'],
+    // }),
 
     // Delete admin AI contact
     deleteAdminAiContact: builder.mutation({
@@ -135,9 +135,10 @@ export const {
   useAddAdminAiContactMutation,
   useGetElementsQuery,
   useGetAdminAiContactsQuery,
-  useUpdateAdminAiContactMutation,
+  // useUpdateAdminAiContactMutation,
   useDeleteAdminAiContactMutation,
   useEditElementsMutation,
+
 } = adminApi;
 
 
