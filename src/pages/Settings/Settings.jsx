@@ -15,7 +15,7 @@ import {
   useGetElementsQuery,
   useGetAdminAiContactsQuery,
   useDeleteAdminAiContactMutation,
-  // useUpdateAdminAiContactMutation,
+  useUpdateAdminAiContactMutation,
   useEditElementsMutation,
 } from "../../rtk/api/adminApi";
 import EditAiContactModal from "../../components/EditAiContactModal.jsx";
@@ -1052,8 +1052,7 @@ const SettingsPage = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [editElements, { isLoading: isEditingElements }] =
     useEditElementsMutation();
-  // const [updateAdminAiContact, { isLoading: isUpdating }] =
-  //   useUpdateAdminAiContactMutation();
+  const [updateAdminAiContact] = useUpdateAdminAiContactMutation();
   const {
     data: elementsData,
     isLoading: isElementsLoading,
@@ -1162,35 +1161,31 @@ const SettingsPage = () => {
     }
   };
 
-  const handleUpdateContact = async (formData, id) => {
+  const handleUpdateContact = async (updatedData, id) => {
     try {
-      const form = new FormData();
-
-      form.append("name", formData.name);
-      form.append("age", formData.age);
-      form.append("gender", formData.gender);
-      form.append("relationship", formData.relationship);
-      form.append("expertise", formData.expertise);
-      form.append("canTextEvery", formData.canTextEvery);
-      form.append("title", formData.title);
-      form.append("type", formData.type);
-
-      if (formData.aiAvatar instanceof File) {
-        form.append("aiAvatar", formData.aiAvatar);
+      let payload;
+  
+      // If avatar updated -> FormData
+      if (updatedData instanceof FormData) {
+        payload = updatedData;
+      } else {
+        payload = { ...updatedData };
       }
-
-      if (Array.isArray(formData.characterstics)) {
-        formData.characterstics.forEach((c) =>
-          form.append("characterstics[]", c)
-        );
-      }
-
-      await updateAdminAiContact({ id, body: form }).unwrap();
-
+  
+      await updateAdminAiContact({
+        id: id,
+        aiContact: payload,
+      }).unwrap();
+  
       setSuccess("AI Contact updated successfully!");
       refetch();
+  
     } catch (err) {
-      setError(err?.data?.message || "Update failed");
+      const message =
+        err?.data?.message ||
+        err?.error ||
+        "Failed to update AI Contact";
+      setError(message);
     }
   };
 

@@ -1,80 +1,78 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const adminApi = createApi({
-  reducerPath: 'adminApi',
+  reducerPath: "adminApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_SERVER_URL + '/admin',
+    baseUrl: import.meta.env.VITE_SERVER_URL + "/admin",
     prepareHeaders: (headers) => {
-      const token = localStorage.getItem('token');
-      if (token) headers.set('Authorization', `Bearer ${token}`);
+      const token = localStorage.getItem("token");
+      if (token) headers.set("Authorization", `Bearer ${token}`);
       return headers;
     },
   }),
-  tagTypes: ['Users', 'AiContacts', 'Analytics', 'Contacts'],
+  tagTypes: ["Users", "AiContacts", "Analytics", "Contacts"],
   endpoints: (builder) => ({
-
     getAnalyticsInsights: builder.query({
-      query: () => '/getAnalysticsInsights',
-      providesTags: ['Analytics'],
+      query: () => "/getAnalysticsInsights",
+      providesTags: ["Analytics"],
     }),
 
     getUserList: builder.query({
-      query: () => '/getAllUsers',
-      providesTags: ['Users'],
+      query: () => "/getAllUsers",
+      providesTags: ["Users"],
     }),
 
     deleteUser: builder.mutation({
       query: (id) => ({
         url: `/deleteUser/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Users'],
+      invalidatesTags: ["Users"],
     }),
 
     activateOrDeactivate: builder.mutation({
       query: (id) => ({
         url: `/activateOrDeactivateUser/${id}`,
-        method: 'PUT',
+        method: "PUT",
       }),
-      invalidatesTags: ['Users'],
+      invalidatesTags: ["Users"],
     }),
 
     allAiContactsList: builder.query({
-      query: () => '/getAllAiContacts',
-      providesTags: ['AiContacts'],
+      query: () => "/getAllAiContacts",
+      providesTags: ["AiContacts"],
     }),
 
     updateAiContact: builder.mutation({
       query: ({ id, aiContact }) => ({
         url: `/updateAiContact/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body: aiContact,
       }),
-      invalidatesTags: ['AiContacts'],
+      invalidatesTags: ["AiContacts"],
     }),
 
     deleteAiContact: builder.mutation({
       query: (id) => ({
         url: `/deleteAiContact/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['AiContacts'],
+      invalidatesTags: ["AiContacts"],
     }),
 
     getContacts: builder.query({
-      query: () => '/getContacts',
-      providesTags: ['Contacts'],
+      query: () => "/getContacts",
+      providesTags: ["Contacts"],
     }),
-
 
     // Create AI contact (absolute URL to satisfy requirement)
     addAdminAiContact: builder.mutation({
       query: (payload) => ({
-        url: '/addAdminAiContact',
-        method: 'POST',
+        url: "/addAdminAiContact",
+        method: "POST",
         body: payload,
       }),
-      invalidatesTags: ['AiContacts'],
+      invalidatesTags: ["AiContacts"],
     }),
 
     // Fetch dropdown options for the Create AI Contact form (absolute URL)
@@ -85,41 +83,38 @@ export const adminApi = createApi({
 
     // List admin AI contacts filtered by type
     getAdminAiContacts: builder.query({
-      query: (typeValue) => `/getAdminAiContacts?type=${encodeURIComponent(typeValue)}`,
-      providesTags: ['AiContacts'],
+      query: (typeValue) =>
+        `/getAdminAiContacts?type=${encodeURIComponent(typeValue)}`,
+      providesTags: ["AiContacts"],
     }),
 
-    // Update admin AI contact
-    // updateAdminAiContact: builder.mutation({
-    //   query: (payload) => ({
-    //     url: 'https://52.200.106.168:8000/api/v1/admin/updateAdminAiContact',
-    //     method: 'PUT',
-    //     body: payload,
-    //   }),
-    //   invalidatesTags: ['AiContacts'],
-    // }),
+    updateAdminAiContact: builder.mutation({
+      query: ({ id, aiContact }) => ({
+        url: `/updateAdminAiContact/${id}`,
+        method: "PUT",
+        body: aiContact,
+      }),
+    }),
 
     // Delete admin AI contact
     deleteAdminAiContact: builder.mutation({
       query: (id) => ({
-        url: '/deleteAdminAiContact',
-        method: 'DELETE',
+        url: "/deleteAdminAiContact",
+        method: "DELETE",
         body: { id },
       }),
-      invalidatesTags: ['AiContacts'],
+      invalidatesTags: ["AiContacts"],
     }),
 
     // Edit elements (add/update/delete values)
     editElements: builder.mutation({
       query: (payload) => ({
-        url: '/editElements',
-        method: 'PUT',
+        url: "/editElements",
+        method: "PUT",
         body: payload,
       }),
-      invalidatesTags: ['Elements'],
+      invalidatesTags: ["Elements"],
     }),
-
-
   }),
 });
 
@@ -135,10 +130,7 @@ export const {
   useAddAdminAiContactMutation,
   useGetElementsQuery,
   useGetAdminAiContactsQuery,
-  // useUpdateAdminAiContactMutation,
+  useUpdateAdminAiContactMutation,
   useDeleteAdminAiContactMutation,
   useEditElementsMutation,
-
 } = adminApi;
-
-

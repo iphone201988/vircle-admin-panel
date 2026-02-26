@@ -176,7 +176,8 @@
 
 import React from "react";
 import { Line } from "react-chartjs-2";
-import MonthlyRevenueChart from "./MonthlyRevenueChart";
+// import MonthlyRevenueChart from "./MonthlyRevenueChart";
+import AdminUsageChart from "./AdminUsageChart";
 import Loader from "../Loader";
 import { useGetAnalyticsInsightsQuery } from "../../rtk/api/adminApi";
 import {
@@ -356,10 +357,10 @@ const Overview = () => {
             </div>
           </div>
 
-          {/* Monthly Revenue Chart */}
-          <div className="bg-white p-4 rounded shadow">
-            <MonthlyRevenueChart />
-          </div>
+          {/* Admin Usage Chart */}
+<div className="bg-white p-4 rounded shadow">
+  <AdminUsageChart data={data?.data?.adminUsageStats} />
+</div>
         </>
       )}
     </div>

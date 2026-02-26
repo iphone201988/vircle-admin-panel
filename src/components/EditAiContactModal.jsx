@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { X, Save, User, Upload } from "lucide-react";
-import { useUpdateAiContactMutation } from "../rtk/api/adminApi";
+// import { useUpdateAiContactMutation } from "../rtk/api/adminApi";
 import toast from "react-hot-toast";
 import Loader from "./Loader";
 
@@ -9,7 +9,7 @@ function EditAiContactModal({ open, onClose, contact, onUpdate }) {
   const [loading, setLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(contact?.aiAvatar || null);
   const [formErrors, setFormErrors] = useState({});
-  const [updateAiContact] = useUpdateAiContactMutation();
+  // const [updateAiContact] = useUpdateAiContactMutation();
   useEffect(() => {
     setFormData(contact || {});
     setAvatarPreview(contact?.aiAvatar || null);
@@ -52,41 +52,25 @@ function EditAiContactModal({ open, onClose, contact, onUpdate }) {
       setLoading(true);
   
       let payload;
-  
-      // if avatar is file → send FormData
+      console.log(payload)
+
       if (formData.aiAvatar instanceof File) {
         payload = new FormData();
-  
         Object.keys(formData).forEach((key) => {
           if (formData[key] !== undefined && formData[key] !== null) {
             payload.append(key, formData[key]);
           }
         });
       } else {
-        // send JSON
-        payload = {
-          name: formData.name,
-          age: Number(formData.age),
-          gender: formData.gender,
-          relationship: formData.relationship,
-          expertise: formData.expertise,
-          languagePreference: formData.languagePreference,
-          description: formData.description,
-        };
+        payload = { ...formData };
       }
-  
-      await updateAiContact({
-        id: formData._id || formData.id,
-        aiContact: payload,
-      }).unwrap();
-  
-      toast.success("Contact updated successfully!");
-      onUpdate && onUpdate(formData)
+      
+      onUpdate(payload);
       onClose();
   
     } catch (err) {
       console.log(err);
-      toast.error(err?.data?.message || "Update failed");
+      toast.error("Update failed");
     } finally {
       setLoading(false);
     }
