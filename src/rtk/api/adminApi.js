@@ -17,6 +17,11 @@ export const adminApi = createApi({
       providesTags: ["Analytics"],
     }),
 
+    getSubscriptionAnalytics: builder.query({
+      query: () => "/getSubscriptionAnalytics",
+      providesTags: ["Analytics"],
+    }),
+
     getUserList: builder.query({
       query: () => "/getAllUsers",
       providesTags: ["Users"],
@@ -77,7 +82,7 @@ export const adminApi = createApi({
 
     // Fetch dropdown options for the Create AI Contact form (absolute URL)
     getElements: builder.query({
-      query: () => `http://localhost:2000/api/v1/user/getElements`,
+      query: () => `${import.meta.env.VITE_SERVER_URL}/user/getElements`,
       providesTags: [],
     }),
 
@@ -94,6 +99,7 @@ export const adminApi = createApi({
         method: "PUT",
         body: aiContact,
       }),
+      invalidatesTags: ["AiContacts"],
     }),
 
     // Delete admin AI contact
@@ -120,6 +126,7 @@ export const adminApi = createApi({
 
 export const {
   useGetAnalyticsInsightsQuery,
+  useGetSubscriptionAnalyticsQuery,
   useGetUserListQuery,
   useDeleteUserMutation,
   useActivateOrDeactivateMutation,

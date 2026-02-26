@@ -4,15 +4,23 @@ import { X, Save, User, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import Loader from "./Loader";
 
-function EditAiContactModal({ open, onClose, contact, onUpdate }) {
+function getAvatarDisplayUrl(aiAvatar) {
+  if (!aiAvatar || typeof aiAvatar !== "string") return null;
+  if (aiAvatar.startsWith("data:") || aiAvatar.startsWith("http")) return aiAvatar;
+  const s3Url = import.meta.env.VITE_S3_URL;
+  const serverImgUrl = import.meta.env.VITE_SERVERIMG_URL;
+  return s3Url ? s3Url + aiAvatar : serverImgUrl ? `${serverImgUrl}/${aiAvatar}` : aiAvatar;
+}
+
+function EditAiContactModal({ open, onClose, contact, onUpdate, formMode }) {
   const [formData, setFormData] = useState(contact || {});
   const [loading, setLoading] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState(contact?.aiAvatar || null);
+  const [avatarPreview, setAvatarPreview] = useState(contact?.aiAvatar ? getAvatarDisplayUrl(contact.aiAvatar) : null);
   const [formErrors, setFormErrors] = useState({});
   // const [updateAiContact] = useUpdateAiContactMutation();
   useEffect(() => {
     setFormData(contact || {});
-    setAvatarPreview(contact?.aiAvatar || null);
+    setAvatarPreview(contact?.aiAvatar ? getAvatarDisplayUrl(contact.aiAvatar) : null);
     setFormErrors({});
   }, [contact]);
 
@@ -47,13 +55,11 @@ function EditAiContactModal({ open, onClose, contact, onUpdate }) {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-  
+
     try {
       setLoading(true);
-  
-      let payload;
-      console.log(payload)
 
+      let payload;
       if (formData.aiAvatar instanceof File) {
         payload = new FormData();
         Object.keys(formData).forEach((key) => {
@@ -64,12 +70,14 @@ function EditAiContactModal({ open, onClose, contact, onUpdate }) {
       } else {
         payload = { ...formData };
       }
-      
-      onUpdate(payload);
+
+      const result = onUpdate(payload);
+      if (result && typeof result.then === "function") {
+        await result;
+      }
       onClose();
-  
     } catch (err) {
-      console.log(err);
+      console.error(err);
       toast.error("Update failed");
     } finally {
       setLoading(false);
@@ -109,7 +117,11 @@ function EditAiContactModal({ open, onClose, contact, onUpdate }) {
               <div className=" w-24 h-24 mx-auto mb-4">
                 {avatarPreview ? (
                   <img
-                    src={avatarPreview}
+                    src={
+                      avatarPreview.startsWith("data:") || avatarPreview.startsWith("http")
+                        ? avatarPreview
+                        : (import.meta.env.VITE_AWS_S3_URI || "") + "/" + avatarPreview
+                    }
                     alt="Avatar Preview"
                     className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
                   />
@@ -220,17 +232,19 @@ function EditAiContactModal({ open, onClose, contact, onUpdate }) {
                   />
                 </div>
 
-                {/* Language Preference */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Language Preference</label>
-                  <input
-                    type="text"
-                    value={formData.languagePreference || ""}
-                    onChange={handleChange("languagePreference")}
-                    className="w-full p-4 text-base bg-white rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-200 focus:outline-none"
-                    placeholder="Preferred language for communication"
-                  />
-                </div>
+                {/* Language Preference - hidden when editing AI Contact (admin list) */}
+                {formMode !== "aiContact" && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Language Preference</label>
+                    <input
+                      type="text"
+                      value={formData.languagePreference || ""}
+                      onChange={handleChange("languagePreference")}
+                      className="w-full p-4 text-base bg-white rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-200 focus:outline-none"
+                      placeholder="Preferred language for communication"
+                    />
+                  </div>
+                )}
 
                 {/* Description */}
                 <div className="md:col-span-2">

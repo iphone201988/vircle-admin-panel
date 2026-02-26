@@ -527,26 +527,40 @@ export default function AiContactList() {
 
   const users = data?.data?.AiContacts || [];
 
-  const s3Url = import.meta.env.VITE_S3_URL;
+  const s3Url = import.meta.env.VITE_S3_URL || import.meta.env.VITE_AWS_S3_URI;
+  const serverImgUrl = import.meta.env.VITE_SERVERIMG_URL;
 
-  const rows = users.map((user) => ({
-    id: user._id,
-    name: user.name,
-    expertise: user.expertise,
-    age: user.age,
-    relationship: user.relationship,
-    gender:
-      typeof user.gender === "string"
-        ? user.gender.charAt(0).toUpperCase() +
-          user.gender.slice(1).toLowerCase()
-        : "",
-    languagePreference: user.languagePreference,
-    personaContext: user.personaContext,
-    avatar: s3Url
-      ? s3Url + user.aiAvatar
-      : import.meta.env.VITE_SERVERIMG_URL + "/" + user.aiAvatar,
-    description: user.description,
-  }));
+  const rows = users.map((user) => {
+    let avatar = null;
+    if (user.aiAvatar) {
+      if (user.aiAvatar.startsWith("http")) {
+        avatar = user.aiAvatar;
+      } else {
+        const base = s3Url
+          ? s3Url.endsWith("/")
+            ? s3Url.slice(0, -1)
+            : s3Url
+          : serverImgUrl;
+        avatar = base ? `${base}/${user.aiAvatar.replace(/^\//, "")}` : null;
+      }
+    }
+    return {
+      id: user._id,
+      name: user.name,
+      expertise: user.expertise,
+      age: user.age,
+      relationship: user.relationship,
+      gender:
+        typeof user.gender === "string"
+          ? user.gender.charAt(0).toUpperCase() +
+            user.gender.slice(1).toLowerCase()
+          : "",
+      languagePreference: user.languagePreference,
+      personaContext: user.personaContext,
+      avatar,
+      description: user.description,
+    };
+  });
 
   const handleDeleteClick = async (params) => {
     try {
@@ -558,8 +572,9 @@ export default function AiContactList() {
     }
   };
 
-  const handleEditClick = (contact) => {
-    setSelectedContact(contact);
+  const handleEditClick = (row) => {
+    const fullContact = users.find((u) => u._id === row.id || u._id === row._id) || row;
+    setSelectedContact(fullContact);
     setOpenModal(true);
   };
 
@@ -569,19 +584,14 @@ export default function AiContactList() {
   };
 
   const handleUpdate = async (updatedData) => {
-    try {
-      await updateAiContact({
-        id: selectedContact.id || selectedContact._id, // safe fallback
-        aiContact: updatedData,
-      }).unwrap();
-  
-      toast.success("AI contact updated successfully");
-      refetch();
-      handleModalClose();
-    } catch (error) {
-      toast.error("Failed to update AI contact");
-      console.error("Update error:", error);
-    }
+    const contactId = selectedContact?.id ?? selectedContact?._id;
+    if (!contactId) return;
+    await updateAiContact({
+      id: contactId,
+      aiContact: updatedData,
+    }).unwrap();
+    toast.success("AI contact updated successfully");
+    refetch();
   };
 
   const columns = [
@@ -594,9 +604,11 @@ export default function AiContactList() {
       renderCell: (params) => (
         <Avatar
           alt={params.row.name}
-          src={params.value || "/default-avatar.png"}
+          src={params.value || undefined}
           sx={{ width: 32, height: 32 }}
-        />
+        >
+          {!params.value && params.row.name ? params.row.name.charAt(0).toUpperCase() : null}
+        </Avatar>
       ),
     },
     { field: "name", headerName: "First name", flex: 1, minWidth: 120 },
@@ -712,7 +724,11 @@ export default function AiContactList() {
         open={openModal}
         onClose={handleModalClose}
         contact={selectedContact}
-        onUpdate={handleUpdate}
+        onUpdate={async (data) => {
+          await handleUpdate(data);
+          handleModalClose();
+        }}
+        formMode="aiContact"
       />
     </>
   );

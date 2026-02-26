@@ -19,6 +19,7 @@ import {
   useEditElementsMutation,
 } from "../../rtk/api/adminApi";
 import EditAiContactModal from "../../components/EditAiContactModal.jsx";
+import Loader from "../../components/Loader.jsx";
 
 const initialFormData = {
   type: "",
@@ -353,6 +354,7 @@ const AiContactForm = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      {isSubmitting && <Loader />}
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-200 scrollbar-hide">
         <div className="sticky top-0 bg-white border-b border-gray-200 rounded-t-2xl p-6 flex justify-between items-center">
           <div className="flex items-center space-x-3">
@@ -1048,6 +1050,7 @@ const SettingsPage = () => {
   const [filterType, setFilterType] = useState("new_assistant");
   const { data: listData, refetch } = useGetAdminAiContactsQuery(filterType);
   const [deleteAdminAiContact] = useDeleteAdminAiContactMutation();
+  const [deletingId, setDeletingId] = useState(null);
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
   const [editElements, { isLoading: isEditingElements }] =
@@ -1370,14 +1373,45 @@ const SettingsPage = () => {
 
                         <button
                           onClick={async () => {
+                            setDeletingId(c._id);
                             try {
                               await deleteAdminAiContact(c._id).unwrap();
                               refetch();
-                            } catch (e) {}
+                            } catch (e) {
+                              // Error handled by mutation
+                            } finally {
+                              setDeletingId(null);
+                            }
                           }}
-                          className="px-2 py-1 text-xs rounded bg-red-600 text-white"
+                          disabled={deletingId === c._id}
+                          className="px-2 py-1 text-xs rounded bg-red-600 text-white flex items-center gap-1 disabled:opacity-70 disabled:cursor-not-allowed min-w-[60px] justify-center"
                         >
-                          Delete
+                          {deletingId === c._id ? (
+                            <>
+                              <svg
+                                className="animate-spin h-3 w-3"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                  fill="none"
+                                />
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                />
+                              </svg>
+                              Deleting...
+                            </>
+                          ) : (
+                            "Delete"
+                          )}
                         </button>
                       </td>
                     </tr>
@@ -1402,8 +1436,8 @@ const SettingsPage = () => {
               setSelectedContact(null);
             }}
             contact={selectedContact}
-            onUpdate={(data) => {
-              handleUpdateContact(data, selectedContact._id);
+            onUpdate={async (data) => {
+              await handleUpdateContact(data, selectedContact._id);
               setOpenEdit(false);
               setSelectedContact(null);
             }}
