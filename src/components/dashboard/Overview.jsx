@@ -382,45 +382,25 @@ const Overview = () => {
               </Typography>
             ) : (
               <div className="space-y-6">
-                {/* Subscription summary cards */}
-                {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="bg-white p-4 rounded shadow">
-                    <h3 className="text-sm font-medium text-gray-600">
-                      Active subscribers (current)
-                    </h3>
-                    <p className="text-xl font-bold mt-1">
-                      {subData?.data?.activeSubscribersCurrent ?? 0}
-                    </p>
-                  </div>
-                  <div className="bg-white p-4 rounded shadow">
-                    <h3 className="text-sm font-medium text-gray-600">
-                      Activations (last 12 weeks total)
-                    </h3>
-                    <p className="text-xl font-bold mt-1">
-                      {(subData?.data?.activationsByWeekAndPlan ?? []).reduce(
-                        (sum, w) => sum + (w.total || 0),
-                        0
-                      )}
-                    </p>
-                  </div>
-                  <div className="bg-white p-4 rounded shadow">
-                    <h3 className="text-sm font-medium text-gray-600">
-                      Cancellations by plan (total)
-                    </h3>
-                    <p className="text-xl font-bold mt-1">
-                      {(subData?.data?.cancellationsByPlan ?? []).reduce(
-                        (sum, p) => sum + (p.count || 0),
-                        0
-                      )}
-                    </p>
-                  </div>
-                </div> */}
-
-                {/* Active subscribers per week - line chart */}
-                {/* <div className="bg-white p-4 rounded shadow">
-                  <h3 className="text-base font-medium mb-4">
-                    Active subscribers per week
+                {/* Active subscribers: Premium & Classic only (excludes Free) */}
+                <div className="bg-white p-4 rounded shadow">
+                  <h3 className="text-base font-medium mb-1">
+                    Active subscribers (Premium &amp; Classic only)
                   </h3>
+                  <p className="text-sm text-gray-500 mb-3">
+                    Excludes Free plan. Count is distinct users with an active paid subscription.
+                  </p>
+                  <p className="text-xl font-bold">
+                    {subData?.data?.activeSubscribersCurrent ?? 0}
+                  </p>
+                </div>
+
+                {/* Active subscribers per week - Premium & Classic only */}
+                <div className="bg-white p-4 rounded shadow">
+                  <h3 className="text-base font-medium mb-1">
+                    Active subscribers per week (Premium &amp; Classic only)
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">Excludes Free plan.</p>
                   <div className="relative w-full h-64 sm:h-72">
                     <Line
                       data={{
@@ -430,7 +410,7 @@ const Overview = () => {
                           ) ?? [],
                         datasets: [
                           {
-                            label: "Active subscribers",
+                            label: "Active subscribers (paid)",
                             data:
                               subData?.data?.activeSubscribersPerWeek?.map(
                                 (w) => w.count
@@ -444,9 +424,9 @@ const Overview = () => {
                       options={lineOptions}
                     />
                   </div>
-                </div> */}
+                </div>
 
-                {/* Activations by week and category */}
+                {/* Activations per week and plan */}
                 <div className="bg-white p-4 rounded shadow overflow-x-auto">
                   <h3 className="text-base font-medium mb-4">
                     Activations per week and plan
@@ -457,7 +437,7 @@ const Overview = () => {
                       ...new Set(
                         rows.flatMap((r) => (r.byPlan ?? []).map((p) => p.planName))
                       ),
-                    ].filter(Boolean);
+                    ].filter(Boolean).filter((name) => name !== "Free");
                     if (!rows.length) {
                       return <p className="text-gray-500 py-4">No activation data.</p>;
                     }
@@ -499,26 +479,129 @@ const Overview = () => {
                   })()}
                 </div>
 
-                {/* Cancellations by category (plan) */}
-                <div className="bg-white p-4 rounded shadow">
+                {/* Activations with user */}
+                <div className="bg-white p-4 rounded shadow overflow-x-auto">
                   <h3 className="text-base font-medium mb-4">
-                    Cancellations by plan
+                    Activations with user
                   </h3>
-                  <div className="flex flex-wrap gap-4">
-                    {(subData?.data?.cancellationsByPlan ?? []).length === 0 ? (
-                      <p className="text-gray-500">No cancellations data.</p>
-                    ) : (
-                      (subData?.data?.cancellationsByPlan ?? []).map((p) => (
-                        <div
-                          key={p.planName}
-                          className="bg-gray-50 px-4 py-2 rounded"
-                        >
-                          <span className="font-medium">{p.planName}:</span>{" "}
-                          <span>{p.count}</span>
-                        </div>
-                      ))
-                    )}
-                  </div>
+                  {(() => {
+                    const rows = subData?.data?.activationsByWeekAndPlan ?? [];
+                    const flat = rows.flatMap((row) =>
+                      (row.byPlan ?? []).flatMap((p) =>
+                        p.planName === "Free"
+                          ? []
+                          : (p.users ?? []).map((u) => ({
+                              weekLabel: row.weekLabel,
+                              planName: p.planName,
+                              userEmail: u.userEmail,
+                              userName: (u.userName || "").trim() || "—",
+                            }))
+                      )
+                    );
+                    if (!flat.length) {
+                      return <p className="text-gray-500 py-4">No activation user data.</p>;
+                    }
+                    return (
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-2 pr-4">Week</th>
+                            <th className="text-left py-2 pr-4">Plan</th>
+                            <th className="text-left py-2 pr-4">User</th>
+                            <th className="text-left py-2">Email</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {flat.map((item, idx) => (
+                            <tr key={idx} className="border-b border-gray-100">
+                              <td className="py-2 pr-4">{item.weekLabel}</td>
+                              <td className="py-2 pr-4">{item.planName}</td>
+                              <td className="py-2 pr-4">{item.userName}</td>
+                              <td className="py-2">{item.userEmail || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    );
+                  })()}
+                </div>
+
+                {/* Cancellations by plan with user */}
+                <div className="bg-white p-4 rounded shadow overflow-x-auto">
+                  <h3 className="text-base font-medium mb-2">
+                    Cancellations by plan (with user)
+                  </h3>
+                  <p className="text-sm text-amber-700 bg-amber-50 p-3 rounded mb-4">
+                    {subData?.data?.cancellationsNote ||
+                      "Cancelled subscriptions are removed from this list once they expire (status changes to expired). For historical context, see Expired subscriptions below."}
+                  </p>
+                  {(subData?.data?.cancellationsWithUser ?? []).length === 0 ? (
+                    <p className="text-gray-500 py-4">No cancelled subscriptions.</p>
+                  ) : (
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 pr-4">Plan</th>
+                          <th className="text-left py-2 pr-4">User</th>
+                          <th className="text-left py-2 pr-4">Email</th>
+                          <th className="text-left py-2">Expiry date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(subData?.data?.cancellationsWithUser ?? []).map((row, idx) => (
+                          <tr key={idx} className="border-b border-gray-100">
+                            <td className="py-2 pr-4">{row.planName}</td>
+                            <td className="py-2 pr-4">{(row.userName || "").trim() || "—"}</td>
+                            <td className="py-2 pr-4">{row.userEmail || "—"}</td>
+                            <td className="py-2">
+                              {row.expiryDate
+                                ? new Date(row.expiryDate).toLocaleDateString()
+                                : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+                {/* Expired subscriptions (includes former cancelled) */}
+                <div className="bg-white p-4 rounded shadow overflow-x-auto">
+                  <h3 className="text-base font-medium mb-2">
+                    Expired subscriptions
+                  </h3>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded mb-4">
+                    {subData?.data?.expiredNote ||
+                      "Expired subscriptions include both naturally expired and previously cancelled ones that have reached their expiry date."}
+                  </p>
+                  {(subData?.data?.expiredWithUser ?? []).length === 0 ? (
+                    <p className="text-gray-500 py-4">No expired subscriptions.</p>
+                  ) : (
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 pr-4">Plan</th>
+                          <th className="text-left py-2 pr-4">User</th>
+                          <th className="text-left py-2 pr-4">Email</th>
+                          <th className="text-left py-2">Expiry date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(subData?.data?.expiredWithUser ?? []).map((row, idx) => (
+                          <tr key={idx} className="border-b border-gray-100">
+                            <td className="py-2 pr-4">{row.planName}</td>
+                            <td className="py-2 pr-4">{(row.userName || "").trim() || "—"}</td>
+                            <td className="py-2 pr-4">{row.userEmail || "—"}</td>
+                            <td className="py-2">
+                              {row.expiryDate
+                                ? new Date(row.expiryDate).toLocaleDateString()
+                                : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
             )}

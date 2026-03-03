@@ -263,12 +263,19 @@ export default function UserList() {
         user.monthlyTokenUsage ??
         0;
 
-      // ✅ START DATE SAFE PARSE
-      const subscriptionStartDate =
+      // ✅ Subscription start: show only for active paid (Classic / Premium), use purchaseDate
+      const paidPlanNames = ["Classic Tier", "Premium Subscription"];
+      const planName =
+        user.subscription?.subscriptionPlanId?.name ??
+        user.subscription?.subscriptionPlanId;
+      const isActivePaid =
         user.subscription &&
         typeof user.subscription === "object" &&
-        user.subscription.startDate
-          ? new Date(user.subscription.startDate).toLocaleDateString()
+        user.subscription.status === "active" &&
+        paidPlanNames.includes(planName);
+      const subscriptionStartDate =
+        isActivePaid && user.subscription.purchaseDate
+          ? new Date(user.subscription.purchaseDate).toLocaleDateString()
           : "--";
 
       // ✅ AVATAR SAFE
